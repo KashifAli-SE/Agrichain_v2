@@ -53,7 +53,9 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
 
     OrderManager orderManager;
     address orderManager_address;
+
     TransactionManager transactionManager; 
+    address transactionManager_Address;
 
     /////////////////////////////////////////
     /////////------EVENTS //////////////////
@@ -68,10 +70,9 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
 
     constructor(address _usermanager) 
         AccessControlled(_usermanager)  {
-              //  orderManager= OrderManager(_orderManager);
-            //  transactionManager= TransactionManager(_transectionManager);
+
         }
-    
+
 
 
     modifier onlyOrderManager(){
@@ -82,12 +83,12 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     function addCrop(string memory _CropName, string memory _CropType, uint256 _cropStockAmount, UNIT _unit, uint256 _pricePerUnit,
         string memory _CropCityCountry) onlyFarmer external override returns(bool)
         {
-                Crop memory newCrop=Crop({CropID: cropCounter, CropName: _CropName,CropType :_CropType, cropStockAmount :_cropStockAmount,unit :_unit,pricePerUnit :_pricePerUnit, cropOwner:msg.sender, CropCityCountry:_CropCityCountry});
-                cropIdToCrop[newCrop.CropID]=newCrop;
-                farmerOwnedCrops[msg.sender].push(cropCounter);
-                
-                emit CropListed(cropCounter,_CropName,_CropType,_cropStockAmount,_unit,_pricePerUnit,msg.sender,_CropCityCountry);
-                cropCounter++;
+            Crop memory newCrop=Crop({CropID: cropCounter, CropName: _CropName,CropType :_CropType, cropStockAmount :_cropStockAmount,unit :_unit,pricePerUnit :_pricePerUnit, cropOwner:msg.sender, CropCityCountry:_CropCityCountry});
+            cropIdToCrop[newCrop.CropID]=newCrop;
+            farmerOwnedCrops[msg.sender].push(cropCounter);
+            
+            emit CropListed(cropCounter,_CropName,_CropType,_cropStockAmount,_unit,_pricePerUnit,msg.sender,_CropCityCountry);
+            cropCounter++;
     }
 
     function updateCrop(uint256 _cropID, uint256 _cropStockAmount, uint256 _pricePerUnit) external override onlyFarmer returns(bool){
@@ -95,6 +96,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
                 newCrop.cropStockAmount=_cropStockAmount;
                 newCrop.pricePerUnit=_pricePerUnit;
                 cropIdToCrop[_cropID]=newCrop;
+                emit CropUpdated(_cropID, _cropStockAmount, _pricePerUnit, msg.sender);
                 return true;
     }
 
@@ -108,18 +110,50 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     }
     */
 
-    function reduce(uint256 _cropId) external onlyOrderManager {
+    function reduce(uint256 _cropId,uint256 quantity) external onlyOrderManager {
+            Crop storage crop=cropIdToCrop[_cropId];
+            require(quantity <= crop.cropStockAmount, "Required quantity Not Available");
+            crop.cropStockAmount -= quantity;
         
         }
+
+    ////////////////////////////////////////////////////
+    ///////////////// SETTERS FUNCTIONS/////////////////
+    ///////////////////////////////////////////////////
+    
+    
+    function setOrderManager(address _orderManager_address) external {
+        orderManager_address=_orderManager_address;
+        orderManager=OrderManager(_orderManager_address);
+    }
+
+    function setTransactionManager(address _transactionManager_address) external {
+        transactionManager_Address=_transactionManager_address;
+        transactionManager=TransactionManager(_transactionManager_address);
+    }
 
     ////////////////////////////////////////////////////
     ///////////////// GETTERS /////////////////////////
     ///////////////////////////////////////////////////
 
-    function getCrop(uint256 _cropID) external view  override returns(Crop memory){}
+    function getCrop(uint256 _cropID) external view  override returns(Crop memory){
 
-    function getOwnedCropsList() external view override returns(bool){}
+    }
 
-    function getAllListedCrops() external view override returns(bool){}
+    function getOwnedCropsList() external view override returns(bool){
+
+    }
+
+    function getAllListedCrops() external view override returns(bool){
+
+    }
+
+    function getOrderManagerAddress() external view returns(address) {
+        return orderManager_address;
+    }
+
+    function getTransactionManager() external view returns(address){
+        return transactionManager_Address;
+    }
     
 }

@@ -44,6 +44,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
     TransactionManager tm;
     Treasury treasury;
 
+    event ProductListed(uint256 indexed productId,address indexed seller,uint256 quantity, uint256 price);
     constructor(address _usermanager) AccessControlled(_usermanager){
 
     }
@@ -59,6 +60,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         producdIdtoProduct[productCounter]=newProduct;
         shopOwnedProducts[msg.sender].push(productCounter);
         producdIdtoIndex[productCounter]=shopOwnedProducts[msg.sender].length-1;
+        emit ProductListed(productCounter,msg.sender,_availableUnits, _pricePerUnit);
         productCounter++;
         return true;
     }
@@ -141,5 +143,6 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
     function getProductById(uint256 _productId) external view override returns(Product memory){
         return producdIdtoProduct[_productId];
     } 
+    
     
 }

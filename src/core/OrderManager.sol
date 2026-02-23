@@ -46,6 +46,10 @@ contract OrderManager is IOrderManager, AccessControlled{
 
     address treasury;
 
+    event OrderCreated(uint256 indexed orderID, address indexed buyer, address indexed seller, uint256 productId);
+    event treasurySet(address indexed treasuryAddress, address indexed updatedBy,uint256 indexed time);
+
+
     constructor(address _usermanager) AccessControlled(_usermanager) {
             // productMarketPlace=ProductMarketplace(_pm);
     }
@@ -73,10 +77,12 @@ contract OrderManager is IOrderManager, AccessControlled{
             uint256 price=productMarketPlace.getProductPrice(_productId);
             uint256 availableUnits=productMarketPlace.getAvailableUnits(_productId);
             require(availableUnits >= _quantity, "required quantity not available");
-            orders.push(Order(orderCounter,_buyer,_seller,_productId,_quantity,price,ORDERSTATUS.PLACED));
+            uint256 amountToPay=price*_quantity;
+            orders.push(Order(orderCounter,_buyer,_seller,_productId,_quantity,price,amountToPay,ORDERSTATUS.PLACED));
             orderIDtoOrderStatus[orderCounter]=ORDERSTATUS.PLACED;
             productMarketPlace.reduce(_productId,_quantity);
             orderIDtoOrderArrayIndex[orderCounter]=orders.length-1;
+            emit OrderCreated(orderCounter, _buyer, _seller, _productId);
             orderCounter++;
             return true;
     }
@@ -92,16 +98,6 @@ contract OrderManager is IOrderManager, AccessControlled{
         return true;
     }
 
-/*    function confirmOrder(uint256 _orderID) external onlyFarmer returns(bool){
-        require(orderIDtoOrderStatus[_orderID] == ORDERSTATUS.PAID, "Order Not paid");
-        Order storage od=orders[_orderID];
-        od.orderStatus=ORDERSTATUS.CONFRIMED;
-        orderIDtoOrderStatus[_orderID]=ORDERSTATUS.CONFRIMED;
-        tre.release(_orderID,payable(od.seller));
-        return true;
-    }
-*/
-
     function confirmOrder(uint256 _orderID) external onlyFarmer returns(bool){
         require(orderIDtoOrderStatus[_orderID] == ORDERSTATUS.PAID, "Order Not paid");
         
@@ -113,6 +109,7 @@ contract OrderManager is IOrderManager, AccessControlled{
         
         od.orderStatus = ORDERSTATUS.CONFRIMED;
         orderIDtoOrderStatus[_orderID] = ORDERSTATUS.CONFRIMED;
+        require(od.seller != address(0), "seller address is Null");
         tre.release(_orderID, payable(od.seller));
         return true;
     }
@@ -139,9 +136,10 @@ contract OrderManager is IOrderManager, AccessControlled{
         return true;
     }
 
-    function setTreasury(address newTreasury) external returns(bool){
+    function setTreasury(address newTreasury) external onlyAdmin returns(bool){
         treasury=newTreasury;
-        tre=Treasury(newTreasury);
+        tre=Treasury(payable(newTreasury));
+        emit treasurySet(newTreasury, msg.sender,block.timestamp);
         return true;
     }
 
@@ -159,10 +157,9 @@ contract OrderManager is IOrderManager, AccessControlled{
         return orders[index];
     }
 
-    function getOrdeAmount(uint256 _orderID) external view returns(uint256){
+    function getOrderAmount(uint256 _orderID) external view returns(uint256){
         uint256 index=orderIDtoOrderArrayIndex[_orderID];
-        uint256 price=orders[index].pricePerUnit*orders[index].quantity;
-        return price;
+        return orders[index].amountToPay;
     }
 
     function getTreasuryContractAddress() external view returns(address){

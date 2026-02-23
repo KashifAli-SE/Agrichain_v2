@@ -26,6 +26,50 @@
 
 pragma solidity 0.8.20;
 
-contract ComplaintRegistry{
+import {IComplainRegisty} from "../interfaces/IComplainRegistry.sol";
 
+contract ComplaintRegistry is IComplainRegisty{
+
+    enum ReportStatus{
+        FILED,
+        UNDER_REVIEWED,
+        RESOLVED_BUYER,
+        RESOLVED_SELLER,
+        REJECTED,
+        RESOLVED
+    }
+
+    struct report{
+        uint256 reportID;
+        uint256 orderID;
+        address buyer;
+        address seller;
+        ReportStatus reportStatus;
+        
+        
+    }
+    
+    function submitReport() external override returns(bool){
+
+        } 
+
+    function resolveReportToBuyer() external override returns(bool){
+
+    }
+
+    function resolveReportToSeller() external override returns(bool){
+
+    }
+
+    function rejectReport() external override returns(bool){
+
+    }
+
+    function withDrawReport() external override returns(bool){
+
+    }
+
+    function getReportStatus() external view override returns(bool){
+
+    }
 }

@@ -30,6 +30,7 @@ pragma solidity 0.8.20;
 
 import {AccessControlled} from "./AccessControlled.sol";
 import {OrderManager} from "./OrderManager.sol";
+import {TransactionManager} from "./TransactionManager.sol";
 
 contract Treasury is AccessControlled {
 
@@ -49,7 +50,9 @@ contract Treasury is AccessControlled {
     mapping(uint256=>ORDERSTATUS) orderIdtoOrderStatus;
 
     address ordermanager_address;
+    address transaction_manager_address;
     OrderManager ordermanager;
+    TransactionManager transaction_manager;
 
     constructor(address um) AccessControlled(um) {
     }
@@ -60,21 +63,21 @@ contract Treasury is AccessControlled {
         _;
     }
 
+    receive() external payable {
+
+    }
+
+    fallback() external payable {
+
+    }
+
     // payForOrder order from treasury will store the funds and make the order paid by 
     // calling makepaid from orderManager contract
 
 
     //farmer is the buyer of products from the shops that why onlyFarmer modifier used
 
-/*    function payForOrder(uint256 _orderID) external onlyFarmer payable returns(bool) {
-        require(_orderID <= ordermanager.getOrderCounter(), "Order does not exist");
-        uint256 index = ordermanager.getOrderindex(_orderID);
-        require(index < ordermanager.getOrdersLength(), "Invalid index");
-        orderIdtoFunds[_orderID]=ordermanager.getOrdeAmount(_orderID);
-        ordermanager.makepaid(_orderID);
-        return true;
-    }
-*/
+
 
     function payForOrder(uint256 _orderID) external onlyFarmer payable returns(bool) {
         require(_orderID <= ordermanager.getOrderCounter(), "Order does not exist");
@@ -82,7 +85,7 @@ contract Treasury is AccessControlled {
         require(index < ordermanager.getOrdersLength(), "Invalid index");
         
         // FIX: Get the required amount to validate payment
-        uint256 requiredAmount = ordermanager.getOrdeAmount(_orderID);
+        uint256 requiredAmount = ordermanager.getOrderAmount(_orderID);
         
         // FIX: Verify farmer sent the correct amount of ETH
         require(msg.value >= requiredAmount, "Incorrect payment amount");
@@ -94,16 +97,6 @@ contract Treasury is AccessControlled {
         return true;
     }
 
-/*   function release(uint256 _orderID,address payable _seller) external onlyOrderManager returns(bool) {
-        uint256 amount=orderIdtoFunds[_orderID];
-        require(amount>0, "No Funds");
-        orderIdtoFunds[_orderID]=0;
-        (bool success,) = _seller.call{value: amount}("");
-        require(success,"Payment Not Released");
-        ordermanager.completeOrder(_orderID);
-        return true;
-    }
-*/
 
     function release(uint256 _orderID, address payable _seller) external onlyOrderManager returns(bool) {
         uint256 amount = orderIdtoFunds[_orderID];
@@ -114,23 +107,14 @@ contract Treasury is AccessControlled {
         
         orderIdtoFunds[_orderID] = 0;  // Prevent reentrancy
         
-        (bool success, ) = _seller.call{value: amount}("");
+        (bool success, ) = _seller.call{value: 100000}("");
         require(success, "Payment Not Released");
         
         ordermanager.completeOrder(_orderID);
         return true;
     }
 
- 
- /* function freePayment(uint256 _orderID) external onlyOrderManager returns(bool) {
-        require(orderIdtoOrderStatus[_orderID] == ORDERSTATUS.CONFRIMED, "awaitingConfirmation order Confirmation");
-        require(address(this).balance > orderIdtoFunds[_orderID] , "Not sufficient fund");
-        (bool success,)= orderIdtoSellerAddress[_orderID].call{value: orderIdtoFunds[_orderID]}("");
-        require(success, "Payment Failed");
-        return true;
-    } */
-
-    function setOrderManager(address _ordermanager) external onlyAdmin returns(bool){
+    function setOrderManager(address _ordermanager) external  returns(bool){
         ordermanager_address=_ordermanager;
         ordermanager=OrderManager(ordermanager_address);
         return true;
@@ -138,6 +122,12 @@ contract Treasury is AccessControlled {
 
     function getOrderManagementContractAddress() external view returns(address ){
         return ordermanager_address;
+    }
+
+    function setTransactionManager(address tm) external onlyAdmin returns(bool){
+        transaction_manager_address=tm;
+        transaction_manager=TransactionManager(tm);
+
     }
 
 }

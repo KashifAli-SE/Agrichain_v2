@@ -25,6 +25,7 @@ interface IOrderManager{
         uint256 productId;
         uint256 quantity;
         uint256 pricePerUnit;
+        uint256 amountToPay;
         ORDERSTATUS orderStatus;
     }
 

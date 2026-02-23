@@ -19,20 +19,30 @@ interface ITransactionManager {
 
     struct Transaction{
         uint256 transactionID;
+        uint256 orderID;
         address seller;
         address buyer;
-        PRODUCT product;
+        uint256 productId;
         uint256 amountTransferred;
-        uint256 totalStockBought;
-        UNIT unit;
+
+
     }
 
-    function addtransaction(Transaction memory) external returns(bool);
+ /*   struct reportedTransaction{
+        uint256 transactionID;
 
-    function getTransactions() external view returns(bool);
 
-    function getTransactionsByID() external view returns(bool);
+    } */
 
-    function getTransactionsByUser() external view returns(bool);
+
+    function reportTransection(uint256 transactionID, address _reported, address accused,string memory reason) external returns(bool);
+
+    function addTransaction(uint256 orderID, address seller, address buyer, uint256 productId, uint256 amountTransferred) external returns(bool);
+
+    function getTransactions() external view returns(Transaction[] memory);
+
+    function getTransactionByID(uint256 _transactionId) external view returns(Transaction memory);
+
+    function getTransactionsByUser(address user) external view returns(uint256[] memory);
 
 }

@@ -21,15 +21,9 @@ contract  deployOtherContracts is Script{
         vm.startBroadcast();
 
         address _userManagement=vm.envAddress("usermanagement_contract_address");
-        // address _treasury=vm.envAddress("Treasury_contract_address");
-        // address _transectionManager=vm.envAddress("");
-        // address _orderManager=vm.envAddress("");
-
-        //CropMarketPlace cm=new CropMarketPlace(_userManagement);
         ProductMarketplace pm=new ProductMarketplace(_userManagement );
         OrderManager om=new OrderManager(_userManagement);
         Treasury treasury=new Treasury(_userManagement);
-
         vm.stopBroadcast();
     }
 }
