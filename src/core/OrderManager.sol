@@ -28,10 +28,13 @@ pragma solidity 0.8.20;
 
 import {IOrderManager} from "../interfaces/IOrderManager.sol";
 import {AccessControlled} from "./AccessControlled.sol";
-import {UserManagement} from "./UserManagement.sol";
+
 
 import {Treasury} from "./Treasury.sol";
 import {ProductMarketplace} from "./ProductMarketplace.sol";
+import {CropMarketPlace} from "./CropMarketplace.sol";
+
+import {PriceConverter} from "../libraries/PriceConverter.sol";
 
 contract OrderManager is IOrderManager, AccessControlled{
 
@@ -41,14 +44,16 @@ contract OrderManager is IOrderManager, AccessControlled{
     mapping(uint256=>ORDERSTATUS) orderIDtoOrderStatus;
 
     ProductMarketplace public productMarketPlace;
+    CropMarketPlace public cropMarketPlace;
     address productMarketPlace_contract_address;
+    address cropMarketPlace_contract_address;
     Treasury tre;
 
     address treasury;
 
     event OrderCreated(uint256 indexed orderID, address indexed buyer, address indexed seller, uint256 productId);
     event treasurySet(address indexed treasuryAddress, address indexed updatedBy,uint256 indexed time);
-
+    event cropMarketPlaceSet(address indexed cropMarketPlace, address indexed updatedBy, uint256 indexed time);
 
     constructor(address _usermanager) AccessControlled(_usermanager) {
             // productMarketPlace=ProductMarketplace(_pm);
@@ -65,7 +70,8 @@ contract OrderManager is IOrderManager, AccessControlled{
         uint256 orderID;
         address buyer;
         address seller;
-        uint256 productId;
+        uint256 productId; // can be product or crop 
+        PRODUCT productType;
         uint256 quantity;
         uint256 pricePerUnit;
         ORDERSTATUS orderStatus;
@@ -73,16 +79,31 @@ contract OrderManager is IOrderManager, AccessControlled{
 
 */
 
-    function addOrder(address _buyer, address _seller, uint256 _productId,uint256 _quantity) external onlyFarmerOrShop override returns(bool){
-            uint256 price=productMarketPlace.getProductPrice(_productId);
-            uint256 availableUnits=productMarketPlace.getAvailableUnits(_productId);
-            require(availableUnits >= _quantity, "required quantity not available");
-            uint256 amountToPay=price*_quantity;
-            orders.push(Order(orderCounter,_buyer,_seller,_productId,_quantity,price,amountToPay,ORDERSTATUS.PLACED));
-            orderIDtoOrderStatus[orderCounter]=ORDERSTATUS.PLACED;
-            productMarketPlace.reduce(_productId,_quantity);
+    function addOrder(uint256 _productId,uint256 _quantity) external onlyFarmerOrBuyer override returns(bool){
+            address seller;
+            if(um.isFarmer(msg.sender)){
+                uint256 price=productMarketPlace.getProductPrice(_productId);
+                uint256 availableUnits=productMarketPlace.getAvailableUnits(_productId);
+                seller=productMarketPlace.getOwnerAddress(_productId);
+                require(availableUnits >= _quantity, "required quantity not available");
+                uint256 amountToPay=price*_quantity;
+                orders.push(Order(orderCounter,msg.sender,seller,_productId,_quantity,price,amountToPay,PRODUCTTYPE.PRODUCT,ORDERSTATUS.PLACED));
+                orderIDtoOrderStatus[orderCounter]=ORDERSTATUS.PLACED;
+                productMarketPlace.reduce(_productId,_quantity);
+            }
+            else if(um.isBuyer(msg.sender)){
+                uint256 price=cropMarketPlace.getCropPrice(_productId);
+                seller=cropMarketPlace.getOwnerAddress(_productId);
+                uint256 availableUnits=cropMarketPlace.getAvailableUnits(_productId);
+                require(availableUnits >= _quantity, "required quantity not available");
+                uint256 amountToPay=price*_quantity;
+                orders.push(Order(orderCounter,msg.sender,seller,_productId,_quantity,price,amountToPay,PRODUCTTYPE.CROP,ORDERSTATUS.PLACED));
+                orderIDtoOrderStatus[orderCounter]=ORDERSTATUS.PLACED;
+                cropMarketPlace.reduce(_productId,_quantity);
+
+            }
             orderIDtoOrderArrayIndex[orderCounter]=orders.length-1;
-            emit OrderCreated(orderCounter, _buyer, _seller, _productId);
+            emit OrderCreated(orderCounter, msg.sender, seller, _productId);
             orderCounter++;
             return true;
     }
@@ -98,7 +119,7 @@ contract OrderManager is IOrderManager, AccessControlled{
         return true;
     }
 
-    function confirmOrder(uint256 _orderID) external onlyFarmer returns(bool){
+    function confirmOrder(uint256 _orderID) external onlyFarmerOrBuyer returns(bool){
         require(orderIDtoOrderStatus[_orderID] == ORDERSTATUS.PAID, "Order Not paid");
         
         // FIX: Get the actual array index from the mapping
@@ -110,7 +131,7 @@ contract OrderManager is IOrderManager, AccessControlled{
         od.orderStatus = ORDERSTATUS.CONFRIMED;
         orderIDtoOrderStatus[_orderID] = ORDERSTATUS.CONFRIMED;
         require(od.seller != address(0), "seller address is Null");
-        tre.release(_orderID, payable(od.seller));
+        tre.release(_orderID, payable(od.seller), payable(od.buyer));
         return true;
     }
 
@@ -130,7 +151,7 @@ contract OrderManager is IOrderManager, AccessControlled{
     /////////////////////////////////////////////
 
     
-    function setProductMarketPlace(address _productMarketPlaceAddress) external returns(bool){
+    function setProductMarketPlace(address _productMarketPlaceAddress) external onlyAdmin returns(bool){
         productMarketPlace_contract_address=_productMarketPlaceAddress;
         productMarketPlace=ProductMarketplace(_productMarketPlaceAddress);
         return true;
@@ -143,6 +164,13 @@ contract OrderManager is IOrderManager, AccessControlled{
         return true;
     }
 
+    function setCropMarketPlace(address _cropMarketPlaceAddress) external onlyAdmin returns(bool){
+        cropMarketPlace_contract_address=_cropMarketPlaceAddress;
+        cropMarketPlace=CropMarketPlace(_cropMarketPlaceAddress);
+        emit cropMarketPlaceSet(_cropMarketPlaceAddress, msg.sender,block.timestamp);
+        return true;
+    }
+
 
     ///////////////////////////////////////////////
     //////////-------GETTERS--------///////////////
@@ -150,8 +178,8 @@ contract OrderManager is IOrderManager, AccessControlled{
 
     function getOrderStatusByOrderID(uint256 _orderID) external view  returns(ORDERSTATUS) {
         return orderIDtoOrderStatus[_orderID];
-
     }
+    
     function getOrderByID(uint256 _orderID) external view override returns(Order memory){
         uint256 index=orderIDtoOrderArrayIndex[_orderID];
         return orders[index];

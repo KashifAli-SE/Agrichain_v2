@@ -68,6 +68,7 @@ abstract contract AccessControlled {
     }
 
     modifier onlyAdminOrShop() {
+        require(um.isActiveUser(msg.sender) != false , "Not a FARMER");
         require(um.isShop(msg.sender) || um.isAdmin(msg.sender) , "Not a Shop or Admin");
         _;
     }
@@ -77,12 +78,16 @@ abstract contract AccessControlled {
         _ ;
     }
 
-    modifier onlyFarmerOrShop() {
+    modifier onlyFarmerOrBuyer() {
+        require(um.isActiveUser(msg.sender), "Not an ActiveUser");
         require(um.isFarmer(msg.sender) || um.isBuyer(msg.sender), "Not a FARMER or BUYER");
         _;
     }
 
-
-
+    modifier onlyFarmerOrShop() {
+        require(um.isActiveUser(msg.sender) , "Not an ActiveUser");
+        require(um.isFarmer(msg.sender) || um.isShop(msg.sender), "Not a FARMER or BUYER");
+        _;
+    }
 
 }

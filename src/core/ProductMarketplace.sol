@@ -44,7 +44,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
     TransactionManager tm;
     Treasury treasury;
 
-    event ProductListed(uint256 indexed productId,address indexed seller,uint256 quantity, uint256 price);
+    event ProductListed(uint256 indexed productId,address indexed seller,uint256 quantity, uint256 price,string _ipfsImageHash);
     constructor(address _usermanager) AccessControlled(_usermanager){
 
     }
@@ -55,12 +55,12 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         _;
     }
 
-    function listProduct(string memory _name, PRODUCTTYPE _type, uint256 _availableUnits, uint256 _pricePerUnit) external onlyShop override returns(bool){
-        Product memory newProduct= Product(productCounter,_name,_type,_availableUnits,_pricePerUnit,msg.sender);
+    function listProduct(string memory _name, PRODUCTTYPE _type, uint256 _availableUnits, uint256 _pricePerUnit,string memory _ipfsImageHash) external onlyShop override returns(bool){
+        Product memory newProduct= Product(productCounter,_name,_type,_availableUnits,_pricePerUnit,msg.sender,_ipfsImageHash);
         producdIdtoProduct[productCounter]=newProduct;
         shopOwnedProducts[msg.sender].push(productCounter);
         producdIdtoIndex[productCounter]=shopOwnedProducts[msg.sender].length-1;
-        emit ProductListed(productCounter,msg.sender,_availableUnits, _pricePerUnit);
+        emit ProductListed(productCounter,msg.sender,_availableUnits, _pricePerUnit,_ipfsImageHash);
         productCounter++;
         return true;
     }
@@ -97,16 +97,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
 
         return true;
     }
-
     
-
-    /*function buyProduct(uint256 ProductId, uint256 boughtUnits, address ProductOwner) payable external onlyFarmer override  returns(bool){
-        Product memory product=producdIdtoProduct[ProductId];
-        require(product.availableUnits>boughtUnits && msg.value > boughtUnits*product.pricePerUnit, "Product Out of stock or Insufficient Funds");
-        product.availableUnits -= boughtUnits;
-        producdIdtoProduct[ProductId];
- 
-    }*/
 
     function reduce(uint256 _productId,uint256 quantity) external onlyOrderManager  returns(bool) {
         Product memory product=producdIdtoProduct[_productId];
@@ -114,22 +105,22 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         product.availableUnits -= quantity;
         producdIdtoProduct[_productId]=product;
         return true;
-    }
+     }
 
     function getAvailableUnits(uint256 _productId) external view returns(uint256){
         return producdIdtoProduct[_productId].availableUnits;
-    }
+     }
 
    // function getProductUnit(uint256 prodductId) external view returns(UNIT memory){ }
 
    function setOrderManager(address ordermanager_address) external returns(bool){
         orderManager_address=ordermanager_address;
         return true;
-   }
+    }
 
    function getProductsByShop(address _shopAddress) external view returns(uint256[] memory){
         return shopOwnedProducts[_shopAddress];
-   }
+    }
 
     function getProductPrice(uint256 _ProducdId) external view override returns(uint256){
         return producdIdtoProduct[_ProducdId].pricePerUnit;
@@ -138,11 +129,16 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
     
    function getOrderManagementContractAddress() external view returns(address ){
         return orderManager_address;
-   }
+    }
 
     function getProductById(uint256 _productId) external view override returns(Product memory){
         return producdIdtoProduct[_productId];
     } 
     
+    function getOwnerAddress(uint256 _productId) external view returns(address){
+        uint256 index=producdIdtoIndex[_productId];
+        address OwnerAddress=producdIdtoProduct[_productId].ProductOwner;
+        return OwnerAddress;
+    }
     
 }

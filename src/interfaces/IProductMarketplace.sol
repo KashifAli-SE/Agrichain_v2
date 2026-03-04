@@ -20,9 +20,10 @@ interface IProductMarketplace {
         uint256 availableUnits;
         uint256 pricePerUnit;
         address ProductOwner;
+        string ipfsImageHash;
     }
 
-    function listProduct(string memory _name, PRODUCTTYPE _type, uint256 _availableUnits, uint256 _pricePerUnit) external returns(bool);
+    function listProduct(string memory _name, PRODUCTTYPE _type, uint256 _availableUnits, uint256 _pricePerUnit,string memory _ipfsImageHash) external returns(bool);
 
     function updateProduct(uint256 _ProducdId, uint256 _pricePerUnit, uint256 _availableUnits) external returns(bool);
     

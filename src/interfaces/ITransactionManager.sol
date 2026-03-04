@@ -22,10 +22,7 @@ interface ITransactionManager {
         uint256 orderID;
         address seller;
         address buyer;
-        uint256 productId;
         uint256 amountTransferred;
-
-
     }
 
  /*   struct reportedTransaction{
@@ -37,7 +34,7 @@ interface ITransactionManager {
 
     function reportTransection(uint256 transactionID, address _reported, address accused,string memory reason) external returns(bool);
 
-    function addTransaction(uint256 orderID, address seller, address buyer, uint256 productId, uint256 amountTransferred) external returns(bool);
+    function addTransaction(uint256 orderID, address payable seller, address payable buyer, uint256 amountTransferred) external returns(bool);
 
     function getTransactions() external view returns(Transaction[] memory);
 

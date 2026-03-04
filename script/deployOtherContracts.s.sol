@@ -20,10 +20,12 @@ contract  deployOtherContracts is Script{
     function run() public {
         vm.startBroadcast();
 
-        address _userManagement=vm.envAddress("usermanagement_contract_address");
-        ProductMarketplace pm=new ProductMarketplace(_userManagement );
-        OrderManager om=new OrderManager(_userManagement);
+        address _userManagement=vm.envAddress("usermanagement_contract_address");  // already deployed
+        ProductMarketplace pm=new ProductMarketplace(_userManagement );         // Products from shops
+        CropMarketPlace cp=new CropMarketPlace(_userManagement);
+        OrderManager om=new OrderManager(_userManagement);                      
         Treasury treasury=new Treasury(_userManagement);
+        TransactionManager tm = new TransactionManager(_userManagement);
         vm.stopBroadcast();
     }
 }

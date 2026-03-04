@@ -18,6 +18,11 @@ interface IOrderManager{
         COMPLETED
     }
 
+    enum PRODUCTTYPE{
+        PRODUCT,
+        CROP
+    }
+
     struct Order{
         uint256 orderID;
         address buyer;
@@ -26,11 +31,12 @@ interface IOrderManager{
         uint256 quantity;
         uint256 pricePerUnit;
         uint256 amountToPay;
+        PRODUCTTYPE Type;
         ORDERSTATUS orderStatus;
     }
 
     // STEP-1 FARMER CREATES AN ORDER
-    function addOrder(address buyer, address seller, uint256 productId,uint256 quantity) external returns(bool);
+    function addOrder(uint256 productId,uint256 quantity) external returns(bool);
 
     //STEP-2 FARMER PAYS FOR THE ORDER THROUGH treasury.payForOrder() 
     //Function which will call makepaid function below

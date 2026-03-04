@@ -45,11 +45,10 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     ////////////////////////////////////////
 
     uint256 public cropCounter=0;
-    uint256 public boughtCropCounter=0;
-    mapping(uint256 => Crop) cropIdToCrop;
+    Crop[] public cropsArray;
+    mapping(uint256=>uint256) cropIDtoArrayIndex;
     mapping(address=>uint256[]) farmerOwnedCrops;
-    mapping(uint256=>boughtCrop) boughtCropIDtoCrop;
-    mapping(address=>uint256[]) buyerOwnedCrops;
+
 
     OrderManager orderManager;
     address orderManager_address;
@@ -62,7 +61,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     ///////////////////////////////////////
 
     event CropListed(uint256 indexed cropId, string cropName, string indexed cropType,uint256 cropStockAmount,
-    UNIT unit, uint256 pricePerUnit,address indexed cropOwner, string CropCityCountry);
+    UNIT unit, uint256 pricePerUnit,address indexed cropOwner, string CropCityCountry,string ipfsImageHash);
 
     event CropUpdated(uint256 cropID, uint256 cropStockAmount, uint256 pricePerUnit, address indexed cropOwner);
     
@@ -81,37 +80,30 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     }
 
     function addCrop(string memory _CropName, string memory _CropType, uint256 _cropStockAmount, UNIT _unit, uint256 _pricePerUnit,
-        string memory _CropCityCountry) onlyFarmer external override returns(bool)
+        string memory _CropCityCountry, string memory _ipfsImageHash) onlyFarmer external override returns(bool)
         {
-            Crop memory newCrop=Crop({CropID: cropCounter, CropName: _CropName,CropType :_CropType, cropStockAmount :_cropStockAmount,unit :_unit,pricePerUnit :_pricePerUnit, cropOwner:msg.sender, CropCityCountry:_CropCityCountry});
-            cropIdToCrop[newCrop.CropID]=newCrop;
+            Crop memory newCrop=Crop({CropID: cropCounter, CropName: _CropName,CropType :_CropType, cropStockAmount :_cropStockAmount,unit :_unit,pricePerUnit :_pricePerUnit, cropOwner:msg.sender,ipfsImageHash:_ipfsImageHash ,CropCityCountry:_CropCityCountry});
+            cropsArray.push(newCrop);
             farmerOwnedCrops[msg.sender].push(cropCounter);
-            
-            emit CropListed(cropCounter,_CropName,_CropType,_cropStockAmount,_unit,_pricePerUnit,msg.sender,_CropCityCountry);
+            cropIDtoArrayIndex[cropCounter]=cropsArray.length-1;
+            emit CropListed(cropCounter,_CropName,_CropType,_cropStockAmount,_unit,_pricePerUnit,msg.sender,_CropCityCountry,_ipfsImageHash);
             cropCounter++;
     }
 
     function updateCrop(uint256 _cropID, uint256 _cropStockAmount, uint256 _pricePerUnit) external override onlyFarmer returns(bool){
-                Crop memory newCrop= cropIdToCrop[_cropID];
+                uint256 index=cropIDtoArrayIndex[_cropID];
+                Crop storage newCrop= cropsArray[index];
                 newCrop.cropStockAmount=_cropStockAmount;
                 newCrop.pricePerUnit=_pricePerUnit;
-                cropIdToCrop[_cropID]=newCrop;
                 emit CropUpdated(_cropID, _cropStockAmount, _pricePerUnit, msg.sender);
                 return true;
     }
 
-   /* function buyCrop(uint256 _cropID, uint256 _cropAmountToBuy, address _cropOwner) payable external override returns(bool){
-                Crop memory crop=cropIdToCrop[_cropID];
-                require(crop.cropStockAmount>_cropAmountToBuy && msg.value > crop.pricePerUnit*_cropAmountToBuy, "Crop Out of stock or Insufficient Funds");
-                address transferedTo= crop.cropOwner;
-                crop.cropStockAmount -= _cropAmountToBuy;
-                buyerOwnedCrops[msg.sender].push(boughtCropCounter);
-                boughtCropIDtoCrop[boughtCropCounter]=boughtCrop(boughtCropCounter,_cropAmountToBuy,crop.unit,crop.cropOwner,msg.sender);
-    }
-    */
+
 
     function reduce(uint256 _cropId,uint256 quantity) external onlyOrderManager {
-            Crop storage crop=cropIdToCrop[_cropId];
+            uint256 index=cropIDtoArrayIndex[_cropId];
+            Crop storage crop=cropsArray[index];
             require(quantity <= crop.cropStockAmount, "Required quantity Not Available");
             crop.cropStockAmount -= quantity;
         
@@ -122,12 +114,12 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     ///////////////////////////////////////////////////
     
     
-    function setOrderManager(address _orderManager_address) external {
+    function setOrderManager(address _orderManager_address) external onlyAdmin {
         orderManager_address=_orderManager_address;
         orderManager=OrderManager(_orderManager_address);
     }
 
-    function setTransactionManager(address _transactionManager_address) external {
+    function setTransactionManager(address _transactionManager_address) external onlyAdmin {
         transactionManager_Address=_transactionManager_address;
         transactionManager=TransactionManager(_transactionManager_address);
     }
@@ -137,15 +129,28 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     ///////////////////////////////////////////////////
 
     function getCrop(uint256 _cropID) external view  override returns(Crop memory){
+        uint256 index=cropIDtoArrayIndex[_cropID];
+        return cropsArray[index];
 
     }
 
-    function getOwnedCropsList() external view override returns(bool){
+    function getCropPrice(uint256 _cropID) external view override returns(uint256){
+        uint256 index=cropIDtoArrayIndex[_cropID];
+        return cropsArray[index].pricePerUnit;        
 
     }
 
-    function getAllListedCrops() external view override returns(bool){
+    function getOwnedCropsList() external view override returns(uint256[] memory){
+        return farmerOwnedCrops[msg.sender];
+    }
 
+    function getAllListedCrops() external view override returns(Crop[] memory){
+        return cropsArray;
+    }
+
+    function getAvailableUnits(uint256 _cropId) external view override returns(uint256){
+        uint256 index=cropIDtoArrayIndex[_cropId];
+        return cropsArray[index].cropStockAmount;
     }
 
     function getOrderManagerAddress() external view returns(address) {
@@ -155,5 +160,12 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     function getTransactionManager() external view returns(address){
         return transactionManager_Address;
     }
-    
+
+    function getOwnerAddress(uint256 _cropId) external view returns(address){
+        uint256 index=cropIDtoArrayIndex[_cropId];
+        address OwnerAddress=cropsArray[index].cropOwner;
+        return OwnerAddress;
+    }
+
+
 }

@@ -63,8 +63,8 @@ contract TransactionManager is ITransactionManager,AccessControlled{
     }
 
 
-    function addTransaction(uint256 _orderID, address _seller, address _buyer, uint256 _productId,uint256 _amountTransfered) external onlyTreasury override returns(bool){
-        Transaction memory newTransaction= Transaction(transectionCounter,_orderID, _seller,_buyer,_productId,_amountTransfered);
+    function addTransaction(uint256 _orderID, address payable _seller, address payable _buyer,uint256 _amountTransfered) external onlyTreasury override returns(bool){
+        Transaction memory newTransaction= Transaction(transectionCounter,_orderID, _seller,_buyer,_amountTransfered);
         addressToTransectionsIDs[_seller].push(transectionCounter);
         addressToTransectionsIDs[_buyer].push(transectionCounter);
         transactionIDtodTransactionArrayIndex[transectionCounter]=transactions.length;
@@ -72,6 +72,27 @@ contract TransactionManager is ITransactionManager,AccessControlled{
         emit TransactionAdded(transectionCounter,_orderID,_seller,_buyer,_amountTransfered);
         return true;
     }
+
+ 
+
+    function reportTransection(uint256 transactionID, address _reported, address accused,string memory reason) external returns(bool){
+
+    }
+
+     ///////////////////////////////////////////////
+    //////////-------SETTERS--------///////////////
+    //////////////////////////////////////////////
+
+    function setTreasury(address _treasury) external returns(bool) {
+        treasury_address=payable(_treasury);
+        treasury_contract_address=Treasury(payable(treasury_address));
+
+    }
+
+    ///////////////////////////////////////////////
+    //////////-------GETTERS--------///////////////
+    //////////////////////////////////////////////
+
 
     function getTransactions() external override view returns(Transaction[] memory){
         return transactions;
@@ -85,16 +106,6 @@ contract TransactionManager is ITransactionManager,AccessControlled{
         
     function getTransactionsByUser(address user) external override view returns(uint256[] memory){
         return addressToTransectionsIDs[user];
-    }
-
-    function reportTransection(uint256 transactionID, address _reported, address accused,string memory reason) external returns(bool){
-
-    }
-
-    function setTreasury(address _treasury) external returns(bool) {
-        treasury_address=payable(_treasury);
-        treasury_contract_address=Treasury(payable(treasury_address));
-
     }
 
 

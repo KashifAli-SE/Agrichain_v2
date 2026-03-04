@@ -32,6 +32,8 @@ import {AccessControlled} from "./AccessControlled.sol";
 import {OrderManager} from "./OrderManager.sol";
 import {TransactionManager} from "./TransactionManager.sol";
 
+import {PriceConverter} from "../libraries/PriceConverter.sol";
+
 contract Treasury is AccessControlled {
 
     enum ORDERSTATUS{
@@ -79,7 +81,7 @@ contract Treasury is AccessControlled {
 
 
 
-    function payForOrder(uint256 _orderID) external onlyFarmer payable returns(bool) {
+    function payForOrder(uint256 _orderID) external onlyFarmerOrBuyer payable returns(bool) {
         require(_orderID <= ordermanager.getOrderCounter(), "Order does not exist");
         uint256 index = ordermanager.getOrderindex(_orderID);
         require(index < ordermanager.getOrdersLength(), "Invalid index");
@@ -98,7 +100,7 @@ contract Treasury is AccessControlled {
     }
 
 
-    function release(uint256 _orderID, address payable _seller) external onlyOrderManager returns(bool) {
+    function release(uint256 _orderID, address payable _seller,address payable _buyer) external onlyOrderManager returns(bool) {
         uint256 amount = orderIdtoFunds[_orderID];
         require(amount > 0, "No Funds");
         
@@ -107,27 +109,44 @@ contract Treasury is AccessControlled {
         
         orderIdtoFunds[_orderID] = 0;  // Prevent reentrancy
         
-        (bool success, ) = _seller.call{value: 100000}("");
+        (bool success, ) = _seller.call{value: amount}("");
         require(success, "Payment Not Released");
         
+        transaction_manager.addTransaction(_orderID, _seller,_buyer,amount);
         ordermanager.completeOrder(_orderID);
         return true;
     }
 
-    function setOrderManager(address _ordermanager) external  returns(bool){
+
+    ///////////////////////////////////////////////
+    //////////-------SETTERS--------///////////////
+    //////////////////////////////////////////////
+
+    function setOrderManager(address _ordermanager) external onlyAdmin returns(bool){
         ordermanager_address=_ordermanager;
         ordermanager=OrderManager(ordermanager_address);
         return true;
     }
 
-    function getOrderManagementContractAddress() external view returns(address ){
-        return ordermanager_address;
-    }
+
 
     function setTransactionManager(address tm) external onlyAdmin returns(bool){
         transaction_manager_address=tm;
         transaction_manager=TransactionManager(tm);
 
+    }
+
+    ///////////////////////////////////////////////
+    //////////-------GETTERS--------///////////////
+    //////////////////////////////////////////////
+
+
+    function getOrderManagementContractAddress() external view returns(address ){
+        return ordermanager_address;
+    }
+
+    function getTransactionManagerContractAddress() external view returns(address) {
+        return transaction_manager_address;
     }
 
 }
