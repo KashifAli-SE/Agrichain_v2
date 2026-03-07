@@ -33,8 +33,11 @@ import {OrderManager} from "./OrderManager.sol";
 import {TransactionManager} from "./TransactionManager.sol";
 
 import {PriceConverter} from "../libraries/PriceConverter.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-contract Treasury is AccessControlled {
+contract Treasury is AccessControlled{
+
+    using PriceConverter for uint256;
 
     enum ORDERSTATUS{
         PLACED,
@@ -43,13 +46,15 @@ contract Treasury is AccessControlled {
         COMPLETED
     }
 
-    mapping(uint256=>uint256) orderIdtoFunds;
-    
+    mapping(uint256=>uint256) orderIdtoFunds; //
+
 
     mapping(address=>uint256) addresstoCurrentFund;
     mapping(uint256=>address) orderIdtoSellerAddress;
     mapping(uint256=>address) orderIdtoBuyerAddress;
     mapping(uint256=>ORDERSTATUS) orderIdtoOrderStatus;
+
+    AggregatorV3Interface priceFeed;
 
     address ordermanager_address;
     address transaction_manager_address;
@@ -88,7 +93,7 @@ contract Treasury is AccessControlled {
         
         // FIX: Get the required amount to validate payment
         uint256 requiredAmount = ordermanager.getOrderAmount(_orderID);
-        
+        requiredAmount=requiredAmount.getUSDtoEth(priceFeed);
         // FIX: Verify farmer sent the correct amount of ETH
         require(msg.value >= requiredAmount, "Incorrect payment amount");
         
@@ -136,6 +141,10 @@ contract Treasury is AccessControlled {
 
     }
 
+    function setAggregatorv3InterfacePriceFeed(AggregatorV3Interface _priceFeed) external onlyAdmin returns(bool){
+        priceFeed=_priceFeed;
+    }
+
     ///////////////////////////////////////////////
     //////////-------GETTERS--------///////////////
     //////////////////////////////////////////////
@@ -147,6 +156,10 @@ contract Treasury is AccessControlled {
 
     function getTransactionManagerContractAddress() external view returns(address) {
         return transaction_manager_address;
+    }
+
+    function getPriceFeed() external view returns(AggregatorV3Interface) {
+        return priceFeed;
     }
 
 }

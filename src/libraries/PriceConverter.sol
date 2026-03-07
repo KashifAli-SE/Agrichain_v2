@@ -3,29 +3,43 @@ pragma solidity ^0.8.18;
 
 import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
-// Why is this a library and not abstract?
-// Why not an interface?
+
 library PriceConverter {
-    // We could make this public, but then we'd have to deploy it
 
     function getPrice(AggregatorV3Interface priceFeed) internal view returns (uint256) {
-        // Sepolia ETH / USD Address
-        // https://docs.chain.link/data-feeds/price-feeds/addresses
-
         (, int256 answer, , , ) = priceFeed.latestRoundData();
-        // ETH/USD rate in 18 digit
-        return uint256(answer * 10000000000);
+        return uint256(answer); // price with 8 decimals
     }
 
-    // 1000000000
-    
+    // ETH -> USD conversion
+    // ethAmount is in WEI (1e18)
+    // returns USD amount (whole number like 50)
     function getConversionRate(
         uint256 ethAmount,
         AggregatorV3Interface priceFeed
     ) internal view returns (uint256) {
-        uint256 ethPrice = getPrice(priceFeed);
-        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1000000000000000000;
-        // the actual ETH/USD conversion rate, after adjusting the extra 0s.
-        return ethAmountInUsd;
+
+        uint256 ethPrice = getPrice(priceFeed); // 8 decimals
+
+        // normalize: 18 (ETH) + 8 (price)
+        uint256 usdAmount = (ethAmount * ethPrice) / 1e26;
+
+        return usdAmount;
+    }
+
+    // USD -> ETH conversion
+    // usdAmount is whole number like 50
+    // returns ETH amount in WEI
+    function getUSDtoEth(
+        uint256 usdAmount,
+        AggregatorV3Interface priceFeed
+    ) internal view returns (uint256) {
+
+        uint256 ethPrice = getPrice(priceFeed); // 8 decimals
+
+        // normalize decimals: 18 + 8 = 26
+        uint256 ethAmount = (usdAmount * 1e26) / ethPrice;
+
+        return ethAmount;
     }
 }
