@@ -17,6 +17,13 @@ interface IUserManagement {
         ADMIN
     }
 
+    enum VERIFICATION_STATUS{
+        PENDING,
+        APPLIED,
+        VERIFIED,
+        REJECTED
+    }
+
     struct USER{
         string Name;
         ROLE Role;
@@ -24,11 +31,15 @@ interface IUserManagement {
         string CNIC;
         string city;
         string Country;
+        VERIFICATION_STATUS verificationStatus;
     }
 
     function login() external view returns(USER memory);
 
-    function signUp(USER memory user ) external returns(bool);
+    function signUp( string memory Name, ROLE Role, string memory contactNumber,
+        string memory CNIC,
+        string memory city,
+        string memory Country) external returns(bool);
 
     function deleteAccount() external returns(bool);
 
@@ -48,6 +59,6 @@ interface IUserManagement {
 
     function verifyRole(address) external returns(bool);
 
-    function submitRoleDetails() external returns (bool);
-    
+    function rejectRole(address _address) external returns (bool);
+
 }
