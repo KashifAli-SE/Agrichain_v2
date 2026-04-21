@@ -57,6 +57,12 @@ contract OrderManager is IOrderManager, AccessControlled{
 
     constructor(address _usermanager) AccessControlled(_usermanager) {
             // productMarketPlace=ProductMarketplace(_pm);
+            Order memory dummyOrder= Order(0,address(0),address(0),0,0,0,0,PRODUCTTYPE.NONE,ORDERSTATUS.COMPLETED);
+            orders.push(dummyOrder);
+            orderIDtoOrderArrayIndex[0]=0;
+            orderIDtoOrderStatus[0]=ORDERSTATUS.COMPLETED;
+            orderCounter=1;
+
     }
     
     modifier onlyTreasury() {
@@ -87,7 +93,7 @@ contract OrderManager is IOrderManager, AccessControlled{
                 seller=productMarketPlace.getOwnerAddress(_productId);
                 require(availableUnits >= _quantity, "required quantity not available");
                 uint256 amountToPay=price*_quantity;
-                orders.push(Order(orderCounter,msg.sender,seller,_productId,_quantity,price,amountToPay,PRODUCTTYPE.PRODUCT,ORDERSTATUS.PLACED));
+                orders.push(Order(orderCounter,msg.sender,seller,_productId,_quantity,price,amountToPay,PRODUCTTYPE.Product,ORDERSTATUS.PLACED));
                 orderIDtoOrderStatus[orderCounter]=ORDERSTATUS.PLACED;
                 productMarketPlace.reduce(_productId,_quantity);
             }
@@ -97,7 +103,7 @@ contract OrderManager is IOrderManager, AccessControlled{
                 uint256 availableUnits=cropMarketPlace.getAvailableUnits(_productId);
                 require(availableUnits >= _quantity, "required quantity not available");
                 uint256 amountToPay=price*_quantity;
-                orders.push(Order(orderCounter,msg.sender,seller,_productId,_quantity,price,amountToPay,PRODUCTTYPE.CROP,ORDERSTATUS.PLACED));
+                orders.push(Order(orderCounter,msg.sender,seller,_productId,_quantity,price,amountToPay,PRODUCTTYPE.Crop,ORDERSTATUS.PLACED));
                 orderIDtoOrderStatus[orderCounter]=ORDERSTATUS.PLACED;
                 cropMarketPlace.reduce(_productId,_quantity);
 
@@ -128,8 +134,8 @@ contract OrderManager is IOrderManager, AccessControlled{
         // FIX: Use the index, not the orderID
         Order storage od = orders[index];
         
-        od.orderStatus = ORDERSTATUS.CONFRIMED;
-        orderIDtoOrderStatus[_orderID] = ORDERSTATUS.CONFRIMED;
+        od.orderStatus = ORDERSTATUS.CONFIRMED;
+        orderIDtoOrderStatus[_orderID] = ORDERSTATUS.CONFIRMED;
         require(od.seller != address(0), "seller address is Null");
         tre.release(_orderID, payable(od.seller), payable(od.buyer));
         return true;
@@ -139,7 +145,7 @@ contract OrderManager is IOrderManager, AccessControlled{
     function completeOrder(uint256 _orderID) external override onlyTreasury returns(bool) {
         uint256 index=orderIDtoOrderArrayIndex[_orderID];
         Order memory order=orders[index];
-        require(order.orderStatus == ORDERSTATUS.CONFRIMED,"order not confirmed from Customer");
+        require(order.orderStatus == ORDERSTATUS.CONFIRMED,"order not confirmed from Customer");
         order.orderStatus=ORDERSTATUS.COMPLETED;
         orders[index]=order;
         return true;   

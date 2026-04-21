@@ -30,46 +30,74 @@ import {IComplainRegisty} from "../interfaces/IComplainRegistry.sol";
 
 contract ComplaintRegistry is IComplainRegisty{
 
-    enum ReportStatus{
-        FILED,
-        UNDER_REVIEWED,
-        RESOLVED_BUYER,
-        RESOLVED_SELLER,
-        REJECTED,
-        RESOLVED
-    }
+    event ReportSubmitted(uint256 indexed reportID, uint256 indexed orderID, address indexed buyer, address seller, uint256 timestamp);
 
-    struct report{
-        uint256 reportID;
-        uint256 orderID;
-        address buyer;
-        address seller;
-        ReportStatus reportStatus;
-        
-        
-    }
+    report[] reports;
+    uint256 reportCounter=0;
+    mapping(uint256=>uint256) reportIDtoReportArrayIndex;
+    mapping(uint256=>ReportStatus) reportIDtoReportStatus;
+
     
-    function submitReport() external override returns(bool){
+    function submitReport(uint256 _orderID, address _buyer, address _seller) external override returns(bool){
+        report memory newReport= report(reportCounter,_orderID,_buyer,_seller,ReportStatus.FILED);
+        reportIDtoReportArrayIndex[reportCounter]=reports.length;
+        reportIDtoReportStatus[reportCounter]=ReportStatus.FILED;
+        reports.push(newReport);
+        emit ReportSubmitted(reportCounter,_orderID,_buyer,_seller,block.timestamp);
+        reportCounter++;
+        return true;
 
-        } 
+    } 
 
-    function resolveReportToBuyer() external override returns(bool){
+    function resolveReportToBuyer(uint256 reportId) external override returns(bool){
+        uint256 index=reportIDtoReportArrayIndex[reportId];
+        report storage rp = reports[index];
+            
+        rp.reportStatus = ReportStatus.RESOLVED_BUYER;
+        reportIDtoReportStatus[reportId] = ReportStatus.RESOLVED_BUYER;
+        require(rp.seller != address(0), "seller address is Null");
+        return true;
+        
+
 
     }
 
-    function resolveReportToSeller() external override returns(bool){
+    function resolveReportToSeller(uint256 reportId) external override returns(bool){
+        uint256 index=reportIDtoReportArrayIndex[reportId];
+        report storage rp = reports[index];
+            
+        rp.reportStatus = ReportStatus.RESOLVED_SELLER;
+        reportIDtoReportStatus[reportId] = ReportStatus.RESOLVED_SELLER;
+        require(rp.buyer != address(0), "buyer address is Null");
+        return true;
 
     }
 
-    function rejectReport() external override returns(bool){
+    function rejectReport(uint256 reportId) external override returns(bool){
+        uint256 index=reportIDtoReportArrayIndex[reportId];
+        report storage rp = reports[index];
+            
+        rp.reportStatus = ReportStatus.REJECTED;
+        reportIDtoReportStatus[reportId] = ReportStatus.REJECTED;
+        require(rp.buyer != address(0) && rp.seller != address(0), "buyer or seller address is Null");
+        return true;
 
     }
 
-    function withDrawReport() external override returns(bool){
+    function withDrawReport(uint256 reportId) external override returns(bool){
+        uint256 index=reportIDtoReportArrayIndex[reportId];
+        report storage rp = reports[index];
+            
+        rp.reportStatus = ReportStatus.RESOLVED;
+        reportIDtoReportStatus[reportId] = ReportStatus.RESOLVED;
+        require(rp.buyer != address(0) && rp.seller != address(0), "buyer or seller address is Null");
+        return true;
 
     }
 
-    function getReportStatus() external view override returns(bool){
+    function getReportStatus(uint256 reportId) external view override returns(ReportStatus){
+        return reportIDtoReportStatus[reportId];
+
 
     }
 }

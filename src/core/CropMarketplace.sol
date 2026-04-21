@@ -69,10 +69,10 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
 
     constructor(address _usermanager) 
         AccessControlled(_usermanager)  {
-
+            Crop memory nullCrop=Crop({CropID: 0, CropName: "Null",CropType :"Null", cropStockAmount :0,unit :UNIT.NONE,pricePerUnit :0, cropOwner:address(0),ipfsImageHash:"NullHash" ,CropCityCountry:"NullCityCountry"});
+            cropsArray.push(nullCrop);
+            cropCounter=0;
         }
-
-
 
     modifier onlyOrderManager(){
         require(msg.sender == orderManager_address, "Caller is not Order Manager");
@@ -106,7 +106,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
             Crop storage crop=cropsArray[index];
             require(quantity <= crop.cropStockAmount, "Required quantity Not Available");
             crop.cropStockAmount -= quantity;
-        
+            
         }
 
     ////////////////////////////////////////////////////

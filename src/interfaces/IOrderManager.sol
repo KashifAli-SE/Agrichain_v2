@@ -6,7 +6,8 @@ pragma solidity 0.8.20;
 
 interface IOrderManager{
 
-    enum PRODUCT{
+    enum PRODUCTTYPE{
+        NONE,
         Crop,
         Product
     }
@@ -14,14 +15,10 @@ interface IOrderManager{
     enum ORDERSTATUS{
         PLACED,
         PAID,
-        CONFRIMED,
+        CONFIRMED,
         COMPLETED
     }
-
-    enum PRODUCTTYPE{
-        PRODUCT,
-        CROP
-    }
+    
 
     struct Order{
         uint256 orderID;

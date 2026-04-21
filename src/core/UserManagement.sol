@@ -57,7 +57,8 @@ contract UserManagement is IUserManagement {
 
     constructor() {
         firstAdmin= msg.sender;
-
+        USER memory nullUser= USER("Null", ROLE.NONE, "0000000000", "00000-0000000-0", "NullCity", "NullCountry", VERIFICATION_STATUS.VERIFIED);
+        users.push(nullUser);
     }
     
     function login() external view returns(USER memory){
@@ -81,9 +82,13 @@ contract UserManagement is IUserManagement {
         return true;
     }
 
-    function signUpAsAdmin(USER memory user, address _address) external onlyFirstAdmin returns(bool) {
+    function signUpAsAdmin(string memory _name,
+        string memory _contactNumber,
+        string memory _CNIC,
+        string memory _city,
+        string memory _country,address _address) external onlyFirstAdmin returns(bool) {
         require(AddressToUser[_address] == false, "user address already exist");
-        require(user.Role == ROLE.ADMIN, "USER ROLE IS NOT ADMIN");
+        USER memory user=USER(_name, ROLE.ADMIN, _contactNumber, _CNIC, _city, _country, VERIFICATION_STATUS.VERIFIED);
         AddressToUser[_address]=true;
         AddressToIndex[_address] = users.length;
         users.push(user);
@@ -99,10 +104,15 @@ contract UserManagement is IUserManagement {
         return true;
     }
 
-    function updateAccount(USER memory user) external override returns(bool){
+    function updateAccount(string memory _name,
+        string memory _contactNumber,
+        string memory _city) external override returns(bool){
         require(AddressToUser[msg.sender] == true,"Account address does not exist");
         uint256 userIndex=AddressToIndex[msg.sender];
-        users[userIndex]=user;
+        USER storage user=users[userIndex];
+        user.Name=_name;
+        user.contactNumber=_contactNumber;
+        user.city=_city;
         return true;
     }
 
@@ -192,8 +202,7 @@ contract UserManagement is IUserManagement {
     function getUserId(address _address) external view returns(uint256) {
         require(AddressToUser[_address] == true, "Not A user");
         uint256 index=AddressToIndex[_address];
-        USER storage user=users[index];
-        
+        return index;
     }
 
     function setDocumentRegistry(address _address) external onlyFirstAdmin returns(bool) {

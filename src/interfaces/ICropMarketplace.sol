@@ -5,6 +5,7 @@ pragma solidity 0.8.20;
 interface ICropMarketplace {
       
     enum UNIT{
+        NONE,
         KG,
         TONN,
         DOZEN

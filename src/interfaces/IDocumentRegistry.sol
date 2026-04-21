@@ -6,15 +6,13 @@ interface IDocumentRegistry {
 
     struct Document {
         address owner;
-        string cid;
-        bytes32 hash;
+        bytes32 encryptedCID;
+        bytes32 hash;  // to verify the originality of the document on ipfs and onchain proof
         string docType;
         }
 
-    function addDocument(Document memory _document) external ;
+    function addDocument(bytes32 _encryptedCID, bytes32  _hash, string memory _docType) external ;
 
-    function getDocumentsByUser(address _address) external view returns(Document memory);
-
-    
+    function getDocumentsByUser(address _address) external  returns(Document memory);
 
 }

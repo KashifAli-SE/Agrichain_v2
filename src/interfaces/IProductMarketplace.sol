@@ -6,11 +6,10 @@ pragma solidity 0.8.20;
 interface IProductMarketplace {
 
     enum PRODUCTTYPE{
+        NONE,
         Fertilizer,
         Seed,
-        Pesticides,
-        CROP
-    
+        Pesticides
     } 
 
     struct Product{

@@ -32,7 +32,6 @@ import {AccessControlled} from "./AccessControlled.sol";
 import {Treasury} from "./Treasury.sol";
 
 contract TransactionManager is ITransactionManager,AccessControlled{
-
     mapping(address=> uint256[]) addressToTransectionsIDs;
     Transaction[] transactions;
     uint256 transectionCounter=0;
@@ -44,7 +43,10 @@ contract TransactionManager is ITransactionManager,AccessControlled{
     event TransactionAdded( uint256 indexed transactionID, uint256 indexed orderID,address indexed seller, address buyer, uint256 amountTransferred);
 
     constructor(address _usermanager) AccessControlled(_usermanager){
-
+        Transaction memory dummyTransaction= Transaction(0,0,address(0),address(0),0);
+        transactions.push(dummyTransaction);
+        transactionIDtodTransactionArrayIndex[0]=0;
+        transectionCounter=1;
     }
 
 
@@ -70,6 +72,7 @@ contract TransactionManager is ITransactionManager,AccessControlled{
         transactionIDtodTransactionArrayIndex[transectionCounter]=transactions.length;
         transactions.push(newTransaction);
         emit TransactionAdded(transectionCounter,_orderID,_seller,_buyer,_amountTransfered);
+        transectionCounter++;
         return true;
     }
 

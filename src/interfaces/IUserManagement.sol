@@ -43,7 +43,7 @@ interface IUserManagement {
 
     function deleteAccount() external returns(bool);
 
-    function updateAccount(USER memory user) external returns(bool);
+    function updateAccount(string memory _name, string memory _contactNumber, string memory _city) external returns(bool);
 
     function isFarmer(address) external view returns(bool);
 

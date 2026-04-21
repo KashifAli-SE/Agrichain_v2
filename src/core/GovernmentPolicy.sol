@@ -32,4 +32,14 @@ contract GovernmentPolicy{
 
     }
 
+    function setSubsidies() public returns(bool){
+
+    }
+
+    function setCropQuotas() public returns(bool){
+
+    }
+
+    
+
 }

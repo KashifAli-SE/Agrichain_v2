@@ -46,7 +46,11 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
     Treasury treasury;
 
     event ProductListed(uint256 indexed productId,address indexed seller,uint256 quantity, uint256 price,string _ipfsImageHash);
+    
     constructor(address _usermanager) AccessControlled(_usermanager){
+        Product memory nullProduct= Product(0,"Null", PRODUCTTYPE.NONE, 0, 0, address(0), "NullHash");
+        producdIdtoProduct[0]=nullProduct;
+        productCounter=0;
 
     }
 
