@@ -90,4 +90,22 @@ abstract contract AccessControlled {
         _;
     }
 
+    modifier onlyShopOrBuyer() {
+        require(um.isActiveUser(msg.sender) , "Not an ActiveUser");
+        require(um.isShop(msg.sender) || um.isBuyer(msg.sender), "Not a SHOP or BUYER");
+        _;
+    }
+
+    modifier onlyVerified() {
+        require(um.isActiveUser(msg.sender) , "Not an ActiveUser");
+        require(um.isVerified(msg.sender) , "Not a Verified User");
+        _;
+    }
+
+    modifier onlyFirstAdminOrDocumentRegistry() {
+        require(um.isActiveUser(msg.sender) , "Not an ActiveUser");
+        require(um.isAdmin(msg.sender) , "Not an Admin");
+        _;
+    }
+
 }

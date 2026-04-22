@@ -80,7 +80,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     }
 
     function addCrop(string memory _CropName, string memory _CropType, uint256 _cropStockAmount, UNIT _unit, uint256 _pricePerUnit,
-        string memory _CropCityCountry, string memory _ipfsImageHash) onlyFarmer external override returns(bool)
+        string memory _CropCityCountry, string memory _ipfsImageHash) onlyFarmer onlyVerified  external override returns(bool)
         {
             Crop memory newCrop=Crop({CropID: cropCounter, CropName: _CropName,CropType :_CropType, cropStockAmount :_cropStockAmount,unit :_unit,pricePerUnit :_pricePerUnit, cropOwner:msg.sender,ipfsImageHash:_ipfsImageHash ,CropCityCountry:_CropCityCountry});
             cropsArray.push(newCrop);
@@ -90,9 +90,10 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
             cropCounter++;
     }
 
-    function updateCrop(uint256 _cropID, uint256 _cropStockAmount, uint256 _pricePerUnit) external override onlyFarmer returns(bool){
+    function updateCrop(uint256 _cropID, uint256 _cropStockAmount, uint256 _pricePerUnit) external override onlyFarmer onlyVerified returns(bool){
                 uint256 index=cropIDtoArrayIndex[_cropID];
                 Crop storage newCrop= cropsArray[index];
+                require(newCrop.cropOwner == msg.sender, "Farmer is not the owner of crop");
                 newCrop.cropStockAmount=_cropStockAmount;
                 newCrop.pricePerUnit=_pricePerUnit;
                 emit CropUpdated(_cropID, _cropStockAmount, _pricePerUnit, msg.sender);
@@ -106,7 +107,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
             Crop storage crop=cropsArray[index];
             require(quantity <= crop.cropStockAmount, "Required quantity Not Available");
             crop.cropStockAmount -= quantity;
-            
+
         }
 
     ////////////////////////////////////////////////////
@@ -166,6 +167,8 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
         address OwnerAddress=cropsArray[index].cropOwner;
         return OwnerAddress;
     }
+
+    
 
 
 }

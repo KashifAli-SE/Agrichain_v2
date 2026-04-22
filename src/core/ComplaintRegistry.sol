@@ -27,8 +27,9 @@
 pragma solidity 0.8.20;
 
 import {IComplainRegisty} from "../interfaces/IComplainRegistry.sol";
+import {AccessControlled} from "./AccessControlled.sol";
 
-contract ComplaintRegistry is IComplainRegisty{
+contract ComplaintRegistry is IComplainRegisty, AccessControlled{
 
     event ReportSubmitted(uint256 indexed reportID, uint256 indexed orderID, address indexed buyer, address seller, uint256 timestamp);
 
@@ -38,7 +39,15 @@ contract ComplaintRegistry is IComplainRegisty{
     mapping(uint256=>ReportStatus) reportIDtoReportStatus;
 
     
-    function submitReport(uint256 _orderID, address _buyer, address _seller) external override returns(bool){
+    constructor(address _usermanager) AccessControlled(_usermanager){
+        report memory dummyReport= report(0,0,address(0),address(0),ReportStatus.FILED);
+        reports.push(dummyReport);
+        reportIDtoReportArrayIndex[0]=0;
+        reportIDtoReportStatus[0]=ReportStatus.FILED;
+        reportCounter=1;
+    }
+
+    function submitReport(uint256 _orderID, address _buyer, address _seller) external  onlyVerified override returns(bool){
         report memory newReport= report(reportCounter,_orderID,_buyer,_seller,ReportStatus.FILED);
         reportIDtoReportArrayIndex[reportCounter]=reports.length;
         reportIDtoReportStatus[reportCounter]=ReportStatus.FILED;
@@ -49,7 +58,7 @@ contract ComplaintRegistry is IComplainRegisty{
 
     } 
 
-    function resolveReportToBuyer(uint256 reportId) external override returns(bool){
+    function resolveReportToBuyer(uint256 reportId) external onlyAdmin onlyVerified override returns(bool){
         uint256 index=reportIDtoReportArrayIndex[reportId];
         report storage rp = reports[index];
             
@@ -62,7 +71,7 @@ contract ComplaintRegistry is IComplainRegisty{
 
     }
 
-    function resolveReportToSeller(uint256 reportId) external override returns(bool){
+    function resolveReportToSeller(uint256 reportId) external onlyAdmin onlyVerified override returns(bool){
         uint256 index=reportIDtoReportArrayIndex[reportId];
         report storage rp = reports[index];
             
@@ -73,7 +82,7 @@ contract ComplaintRegistry is IComplainRegisty{
 
     }
 
-    function rejectReport(uint256 reportId) external override returns(bool){
+    function rejectReport(uint256 reportId) external onlyAdmin onlyVerified override returns(bool){
         uint256 index=reportIDtoReportArrayIndex[reportId];
         report storage rp = reports[index];
             
@@ -84,10 +93,9 @@ contract ComplaintRegistry is IComplainRegisty{
 
     }
 
-    function withDrawReport(uint256 reportId) external override returns(bool){
+    function withDrawReport(uint256 reportId) external onlyVerified override returns(bool){
         uint256 index=reportIDtoReportArrayIndex[reportId];
         report storage rp = reports[index];
-            
         rp.reportStatus = ReportStatus.RESOLVED;
         reportIDtoReportStatus[reportId] = ReportStatus.RESOLVED;
         require(rp.buyer != address(0) && rp.seller != address(0), "buyer or seller address is Null");
@@ -97,7 +105,5 @@ contract ComplaintRegistry is IComplainRegisty{
 
     function getReportStatus(uint256 reportId) external view override returns(ReportStatus){
         return reportIDtoReportStatus[reportId];
-
-
     }
 }

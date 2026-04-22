@@ -51,7 +51,6 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         Product memory nullProduct= Product(0,"Null", PRODUCTTYPE.NONE, 0, 0, address(0), "NullHash");
         producdIdtoProduct[0]=nullProduct;
         productCounter=0;
-
     }
 
 
@@ -60,7 +59,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         _;
     }
 
-    function listProduct(string memory _name, PRODUCTTYPE _type, uint256 _availableUnits, uint256 _pricePerUnit,string memory _ipfsImageHash) external onlyShop override returns(bool){
+    function listProduct(string memory _name, PRODUCTTYPE _type, uint256 _availableUnits, uint256 _pricePerUnit,string memory _ipfsImageHash) external onlyShop onlyVerified override returns(bool){
         Product memory newProduct= Product(productCounter,_name,_type,_availableUnits,_pricePerUnit,msg.sender,_ipfsImageHash);
         producdIdtoProduct[productCounter]=newProduct;
         shopOwnedProducts[msg.sender].push(productCounter);
@@ -70,7 +69,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         return true;
     }
 
-    function updateProduct(uint256 _ProducdId, uint256 _pricePerUnit, uint256 _availableUnits) external onlyShop override returns(bool){
+    function updateProduct(uint256 _ProducdId, uint256 _pricePerUnit, uint256 _availableUnits) external onlyShop onlyVerified override returns(bool){
         Product memory newProduct= producdIdtoProduct[_ProducdId];
         require(newProduct.ProductOwner == msg.sender, "Not the Product owner");
         newProduct.pricePerUnit=_pricePerUnit;
@@ -79,7 +78,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         return true;
     }
 
-    function removeProduct(uint256 productId) external onlyAdminOrShop override returns (bool)
+    function removeProduct(uint256 productId) external onlyAdminOrShop onlyVerified override returns (bool)
     {
         Product storage product = producdIdtoProduct[productId];
         address owner = product.ProductOwner;

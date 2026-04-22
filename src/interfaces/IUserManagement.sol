@@ -24,6 +24,11 @@ interface IUserManagement {
         REJECTED
     }
 
+    enum Status{
+        NOT_VERIFIED,
+        VERIFIED
+   }
+
     struct USER{
         string Name;
         ROLE Role;
@@ -56,6 +61,8 @@ interface IUserManagement {
     function isAdmin(address) external view returns(bool);
 
     function isActiveUser(address) external view returns(bool);
+
+    function isVerified(address) external view returns(bool);
 
     function verifyRole(address) external returns(bool);
 

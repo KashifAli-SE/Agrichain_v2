@@ -85,7 +85,7 @@ contract OrderManager is IOrderManager, AccessControlled{
 
 */
 
-    function addOrder(uint256 _productId,uint256 _quantity) external onlyFarmerOrBuyer override returns(bool){
+    function addOrder(uint256 _productId,uint256 _quantity) external onlyFarmerOrBuyer onlyVerified override returns(bool){
             address seller;
             if(um.isFarmer(msg.sender)){
                 uint256 price=productMarketPlace.getProductPrice(_productId);
@@ -125,7 +125,7 @@ contract OrderManager is IOrderManager, AccessControlled{
         return true;
     }
 
-    function confirmOrder(uint256 _orderID) external onlyFarmerOrBuyer returns(bool){
+    function confirmOrder(uint256 _orderID) external onlyFarmerOrBuyer onlyVerified returns(bool){
         require(orderIDtoOrderStatus[_orderID] == ORDERSTATUS.PAID, "Order Not paid");
         
         // FIX: Get the actual array index from the mapping

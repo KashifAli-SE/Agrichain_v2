@@ -35,8 +35,9 @@ contract UserManagement is IUserManagement {
     USER[] internal users;
 
     // USER MAPPINGS
-    mapping(address=>bool) internal AddressToUser;
-    mapping(address=>uint256) internal AddressToIndex;
+    mapping(address=>bool) internal addressToUser;
+    mapping(address=>uint256) internal addressToIndex;
+    mapping(address=>Status) internal addressToStatus;
 
 
     address documentRegistryContract_address;
@@ -62,8 +63,8 @@ contract UserManagement is IUserManagement {
     }
     
     function login() external view returns(USER memory){
-        require(AddressToUser[msg.sender] == true,"Account does not exist");
-        uint256 index=AddressToIndex[msg.sender];
+        require(addressToUser[msg.sender] == true,"Account does not exist");
+        uint256 index=addressToIndex[msg.sender];
         USER memory currentUserData=users[index];
         return currentUserData;
     }
@@ -73,10 +74,10 @@ contract UserManagement is IUserManagement {
         string memory _CNIC,
         string memory _city,
         string memory _country) external returns(bool){
-        require(AddressToUser[msg.sender] == false, "Wallet Address already exists");
+        require(addressToUser[msg.sender] == false, "Wallet Address already exists");
         require(_role != ROLE.ADMIN," can not sign Up as Admin");
-        AddressToUser[msg.sender] = true;
-        AddressToIndex[msg.sender] = users.length;
+        addressToUser[msg.sender] = true;
+        addressToIndex[msg.sender] = users.length;
         USER memory user=USER(_name,_role, _contactNumber, _CNIC, _city, _country, VERIFICATION_STATUS.PENDING);
         users.push(user);
         return true;
@@ -87,28 +88,30 @@ contract UserManagement is IUserManagement {
         string memory _CNIC,
         string memory _city,
         string memory _country,address _address) external onlyFirstAdmin returns(bool) {
-        require(AddressToUser[_address] == false, "user address already exist");
+        require(addressToUser[_address] == false, "user address already exist");
         USER memory user=USER(_name, ROLE.ADMIN, _contactNumber, _CNIC, _city, _country, VERIFICATION_STATUS.VERIFIED);
-        AddressToUser[_address]=true;
-        AddressToIndex[_address] = users.length;
+        addressToUser[_address]=true;
+        addressToIndex[_address] = users.length;
+        addressToStatus[_address]=Status.VERIFIED;
         users.push(user);
         return true;
     }
 
     function deleteAccount() public override returns (bool){
-        require(AddressToUser[msg.sender] == true, "Account address does not exist");
-        uint256 index = AddressToIndex[msg.sender];
+        require(addressToUser[msg.sender] == true, "Account address does not exist");
+        uint256 index = addressToIndex[msg.sender];
         delete users[index];
-        delete AddressToUser[msg.sender];
-        delete AddressToIndex[msg.sender];
+        delete addressToUser[msg.sender];
+        delete addressToIndex[msg.sender];
+        delete addressToStatus[msg.sender];
         return true;
     }
 
     function updateAccount(string memory _name,
         string memory _contactNumber,
         string memory _city) external override returns(bool){
-        require(AddressToUser[msg.sender] == true,"Account address does not exist");
-        uint256 userIndex=AddressToIndex[msg.sender];
+        require(addressToUser[msg.sender] == true,"Account address does not exist");
+        uint256 userIndex=addressToIndex[msg.sender];
         USER storage user=users[userIndex];
         user.Name=_name;
         user.contactNumber=_contactNumber;
@@ -117,8 +120,8 @@ contract UserManagement is IUserManagement {
     }
 
     function isFarmer(address user) external view returns(bool){
-        require(AddressToUser[user] == true, "Account address does not exist");
-        uint256 index=AddressToIndex[user];
+        require(addressToUser[user] == true, "Account address does not exist");
+        uint256 index=addressToIndex[user];
         USER memory currentUserData=users[index];
         if(currentUserData.Role == ROLE.FARMER){
             return true;
@@ -128,8 +131,8 @@ contract UserManagement is IUserManagement {
     }
 
     function isBuyer(address user) external view returns(bool){
-        require(AddressToUser[user] == true, "Account address does not exist");
-        uint256 index=AddressToIndex[user];
+        require(addressToUser[user] == true, "Account address does not exist");
+        uint256 index=addressToIndex[user];
         USER memory currentUserData=users[index];
         if(currentUserData.Role == ROLE.BUYER){
             return true;
@@ -139,8 +142,8 @@ contract UserManagement is IUserManagement {
     }
 
     function isShop(address user) external view returns(bool){
-        require(AddressToUser[user] == true, "Account address does not exist");
-        uint256 index=AddressToIndex[user];
+        require(addressToUser[user] == true, "Account address does not exist");
+        uint256 index=addressToIndex[user];
         USER memory currentUserData=users[index];
         if(currentUserData.Role == ROLE.SHOPKEEPER){
             return true;
@@ -150,8 +153,8 @@ contract UserManagement is IUserManagement {
     }
 
     function isGovernment(address user) external view returns(bool){
-        require(AddressToUser[user] == true, "Account address does not exist");
-        uint256 index=AddressToIndex[user];
+        require(addressToUser[user] == true, "Account address does not exist");
+        uint256 index=addressToIndex[user];
         USER memory currentUserData=users[index];
         if(currentUserData.Role == ROLE.GOVERNMENT){
             return true;
@@ -161,8 +164,8 @@ contract UserManagement is IUserManagement {
     }
 
     function isAdmin(address user) external view returns(bool){
-        require(AddressToUser[user] == true, "Account address does not exist");
-        uint256 index=AddressToIndex[user];
+        require(addressToUser[user] == true, "Account address does not exist");
+        uint256 index=addressToIndex[user];
         USER memory currentUserData=users[index];
         if(currentUserData.Role == ROLE.ADMIN ){
             return true;
@@ -172,36 +175,44 @@ contract UserManagement is IUserManagement {
     }
 
     function isActiveUser(address user) external view returns(bool){
-        return AddressToUser[user] == true;
+        return addressToUser[user] == true;
+
     }
 
+    function isVerified(address user) external view override returns(bool){
+        require(addressToUser[user] == true, "Account address does not exist");
+        return addressToStatus[user] == Status.VERIFIED;
+    }
     function verifyRole(address _address) external override onlyFirstAdminOrDocumentRegistry returns (bool){
-        require(AddressToUser[_address] == true, "Not A user");
-        uint256 index=AddressToIndex[_address];
+        require(addressToUser[_address] == true, "Not A user");
+        uint256 index=addressToIndex[_address];
         USER storage user=users[index];
         require(user.verificationStatus == VERIFICATION_STATUS.APPLIED, "verificationStatus is not applied");
         user.verificationStatus=VERIFICATION_STATUS.VERIFIED;
+        addressToStatus[_address]=Status.VERIFIED;
         return true;
     }
 
     function rejectRole(address _address) external override onlyFirstAdminOrDocumentRegistry returns (bool){
-        require(AddressToUser[_address] == true, "Not A user");
-        uint256 index=AddressToIndex[_address];
+        require(addressToUser[_address] == true, "Not A user");
+        uint256 index=addressToIndex[_address];
         USER storage user=users[index];
         require(user.verificationStatus == VERIFICATION_STATUS.APPLIED, "verificationStatus is not applied");
         user.verificationStatus=VERIFICATION_STATUS.REJECTED;
+        addressToStatus[_address]=Status.NOT_VERIFIED;
         return true;
     }
 
     function appliedForVerification(address _address) external onlyFirstAdminOrDocumentRegistry returns(bool) {
-        uint256 index=AddressToIndex[_address];
+        uint256 index=addressToIndex[_address];
         USER storage user=users[index];
         user.verificationStatus=VERIFICATION_STATUS.APPLIED;
+        
     }
 
     function getUserId(address _address) external view returns(uint256) {
-        require(AddressToUser[_address] == true, "Not A user");
-        uint256 index=AddressToIndex[_address];
+        require(addressToUser[_address] == true, "Not A user");
+        uint256 index=addressToIndex[_address];
         return index;
     }
 
