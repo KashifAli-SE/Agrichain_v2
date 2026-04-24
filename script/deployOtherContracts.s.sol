@@ -4,8 +4,8 @@ pragma solidity 0.8.20;
 
 import {Script} from "../lib/forge-std/src/Script.sol";
 import {UserManagement} from "../src/core/UserManagement.sol";
-import {AccessControlled} from "src/core/AccessControlled.sol";
-import {CropMarketPlace} from "src/core/CropMarketplace.sol";
+import {AccessControlled} from "../src/core/AccessControlled.sol";
+import {CropMarketPlace} from "../src/core/CropMarketplace.sol";
 import {ProductMarketplace} from "../src/core/ProductMarketplace.sol";
 import {OrderManager} from "../src/core/OrderManager.sol";
 import {TransactionManager} from "../src/core/TransactionManager.sol";
@@ -20,7 +20,7 @@ contract  deployOtherContracts is Script{
     function run() public {
         vm.startBroadcast();
 
-        address _userManagement=vm.envAddress("usermanagement_contract_address");  // already deployed
+        address _userManagement=vm.envAddress("userManagementContractAddress");  // already deployed
         ProductMarketplace pm=new ProductMarketplace(_userManagement );         // Products from shops
         CropMarketPlace cp=new CropMarketPlace(_userManagement);
         OrderManager om=new OrderManager(_userManagement);                      

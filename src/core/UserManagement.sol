@@ -39,6 +39,15 @@ contract UserManagement is IUserManagement {
     mapping(address=>uint256) internal addressToIndex;
     mapping(address=>Status) internal addressToStatus;
 
+    event UserSignedUp(address indexed userAddress, string name, ROLE role, uint256 indexed time);
+    event UserLoggedIn(address indexed userAddress, string name, ROLE role, uint256 indexed time);
+    event UserDeleted(address indexed userAddress, uint256 indexed time);
+    event UserUpdated(address indexed userAddress, string name, string contactNumber, string city, uint256 indexed time);
+    event UserVerified(address indexed userAddress, uint256 indexed time);
+    event UserRejected(address indexed userAddress, uint256 indexed time);
+    event AdminAdded(address indexed adminAddress, string name, uint256 indexed time);
+    event DocumentRegistrySet(address indexed documentRegistry, address indexed updatedBy, uint256 indexed time);
+    event userRoleVerificationStatusUpdated(address indexed userAddress, ROLE role, VERIFICATION_STATUS verificationStatus, uint256 indexed time);
 
     address documentRegistryContract_address;
     DocumentRegistry documentRegistryContract;
@@ -80,6 +89,7 @@ contract UserManagement is IUserManagement {
         addressToIndex[msg.sender] = users.length;
         USER memory user=USER(_name,_role, _contactNumber, _CNIC, _city, _country, VERIFICATION_STATUS.PENDING);
         users.push(user);
+        emit UserSignedUp(msg.sender, _name, _role, block.timestamp);
         return true;
     }
 
@@ -94,6 +104,7 @@ contract UserManagement is IUserManagement {
         addressToIndex[_address] = users.length;
         addressToStatus[_address]=Status.VERIFIED;
         users.push(user);
+        emit AdminAdded(_address, _name, block.timestamp);
         return true;
     }
 
@@ -104,6 +115,7 @@ contract UserManagement is IUserManagement {
         delete addressToUser[msg.sender];
         delete addressToIndex[msg.sender];
         delete addressToStatus[msg.sender];
+        emit UserDeleted(msg.sender, block.timestamp);
         return true;
     }
 
@@ -116,6 +128,7 @@ contract UserManagement is IUserManagement {
         user.Name=_name;
         user.contactNumber=_contactNumber;
         user.city=_city;
+        emit UserUpdated(msg.sender, _name, _contactNumber, _city, block.timestamp);
         return true;
     }
 
@@ -163,7 +176,7 @@ contract UserManagement is IUserManagement {
         }
     }
 
-    function isAdmin(address user) external view returns(bool){
+    function isAdmin(address user) public view returns(bool){
         require(addressToUser[user] == true, "Account address does not exist");
         uint256 index=addressToIndex[user];
         USER memory currentUserData=users[index];
@@ -190,6 +203,8 @@ contract UserManagement is IUserManagement {
         require(user.verificationStatus == VERIFICATION_STATUS.APPLIED, "verificationStatus is not applied");
         user.verificationStatus=VERIFICATION_STATUS.VERIFIED;
         addressToStatus[_address]=Status.VERIFIED;
+        emit UserVerified(_address, block.timestamp);
+        emit userRoleVerificationStatusUpdated(_address, user.Role, user.verificationStatus, block.timestamp);
         return true;
     }
 
@@ -200,6 +215,7 @@ contract UserManagement is IUserManagement {
         require(user.verificationStatus == VERIFICATION_STATUS.APPLIED, "verificationStatus is not applied");
         user.verificationStatus=VERIFICATION_STATUS.REJECTED;
         addressToStatus[_address]=Status.NOT_VERIFIED;
+        emit userRoleVerificationStatusUpdated(_address, user.Role, user.verificationStatus, block.timestamp);
         return true;
     }
 
@@ -207,7 +223,8 @@ contract UserManagement is IUserManagement {
         uint256 index=addressToIndex[_address];
         USER storage user=users[index];
         user.verificationStatus=VERIFICATION_STATUS.APPLIED;
-        
+        emit userRoleVerificationStatusUpdated(_address, user.Role, user.verificationStatus, block.timestamp);
+        return true;
     }
 
     function getUserId(address _address) external view returns(uint256) {
@@ -216,9 +233,12 @@ contract UserManagement is IUserManagement {
         return index;
     }
 
-    function setDocumentRegistry(address _address) external onlyFirstAdmin returns(bool) {
+    function setDocumentRegistry(address _address) external returns(bool) {
+        require(_address != address(0), "Not A Valid Address");
+        require(isAdmin(msg.sender) == true, "Only Admin can set Document Registry");
         documentRegistryContract_address= _address;
         documentRegistryContract=DocumentRegistry(_address);
+        emit DocumentRegistrySet(_address, msg.sender, block.timestamp);
         return true;
     }
 

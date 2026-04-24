@@ -84,9 +84,10 @@ contract Treasury is AccessControlled{
 
     //farmer is the buyer of products from the shops that why onlyFarmer modifier used
 
+    event PaymentReceived(uint256 indexed orderID, address indexed payer, uint256 amount, uint256 indexed time);
+    event PaymentReleased(uint256 indexed orderID, address indexed seller, uint256 amount, uint256 indexed time);
 
-
-    function payForOrder(uint256 _orderID) external onlyFarmerOrBuyer payable returns(bool) {
+    function payForOrder(uint256 _orderID) external onlyFarmerOrBuyer onlyVerified payable returns(bool) {
         require(_orderID <= ordermanager.getOrderCounter(), "Order does not exist");
         uint256 index = ordermanager.getOrderindex(_orderID);
         require(index < ordermanager.getOrdersLength(), "Invalid index");
@@ -101,6 +102,7 @@ contract Treasury is AccessControlled{
         orderIdtoFunds[_orderID] = requiredAmount;
         
         ordermanager.makepaid(_orderID);
+        emit PaymentReceived(_orderID, msg.sender, msg.value, block.timestamp);
         return true;
     }
 
@@ -116,6 +118,7 @@ contract Treasury is AccessControlled{
         
         (bool success, ) = _seller.call{value: amount}("");
         require(success, "Payment Not Released");
+        emit PaymentReleased(_orderID, _seller, amount, block.timestamp);
         
         transaction_manager.addTransaction(_orderID, _seller,_buyer,amount);
         ordermanager.completeOrder(_orderID);

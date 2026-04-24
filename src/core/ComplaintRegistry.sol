@@ -30,15 +30,23 @@ import {IComplainRegisty} from "../interfaces/IComplainRegistry.sol";
 import {AccessControlled} from "./AccessControlled.sol";
 
 contract ComplaintRegistry is IComplainRegisty, AccessControlled{
-
-    event ReportSubmitted(uint256 indexed reportID, uint256 indexed orderID, address indexed buyer, address seller, uint256 timestamp);
-
+    
     report[] reports;
     uint256 reportCounter=0;
     mapping(uint256=>uint256) reportIDtoReportArrayIndex;
     mapping(uint256=>ReportStatus) reportIDtoReportStatus;
 
     
+    event ReportSubmitted(uint256 indexed reportID, uint256 indexed orderID, address indexed buyer, address seller, uint256 timestamp);
+    event ReportResolved(uint256 indexed reportID, ReportStatus status, uint256 indexed time);
+    event ReportRejected(uint256 indexed reportID, uint256 indexed time);
+    event ReportWithdrawn(uint256 indexed reportID, uint256 indexed time);
+    event ReportResolvedToBuyer(uint256 indexed reportID, uint256 indexed time);
+    event ReportResolvedToSeller(uint256 indexed reportID, uint256 indexed time);
+    event ReportStatusChanged(uint256 indexed reportID, ReportStatus indexed newStatus, uint256 indexed time);
+
+
+
     constructor(address _usermanager) AccessControlled(_usermanager){
         report memory dummyReport= report(0,0,address(0),address(0),ReportStatus.FILED);
         reports.push(dummyReport);

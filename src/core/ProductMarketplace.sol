@@ -45,8 +45,12 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
     TransactionManager tm;
     Treasury treasury;
 
-    event ProductListed(uint256 indexed productId,address indexed seller,uint256 quantity, uint256 price,string _ipfsImageHash);
-    
+    event ProductListed(uint256 indexed productId,address indexed seller,uint256 indexed time,uint256 quantity, uint256 price,string _ipfsImageHash);
+    event ProductUpdated(uint256 indexed productId,uint256 indexed time,address indexed updatedBy,uint256 quantity, uint256 price);
+    event ProductRemoved(uint256 indexed productId,uint256 indexed time,address indexed removedBy);
+    event OrderManagerSet(address indexed orderManager, address indexed updatedBy, uint256 indexed time);
+
+
     constructor(address _usermanager) AccessControlled(_usermanager){
         Product memory nullProduct= Product(0,"Null", PRODUCTTYPE.NONE, 0, 0, address(0), "NullHash");
         producdIdtoProduct[0]=nullProduct;
@@ -64,7 +68,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         producdIdtoProduct[productCounter]=newProduct;
         shopOwnedProducts[msg.sender].push(productCounter);
         producdIdtoIndex[productCounter]=shopOwnedProducts[msg.sender].length-1;
-        emit ProductListed(productCounter,msg.sender,_availableUnits, _pricePerUnit,_ipfsImageHash);
+        emit ProductListed(productCounter,msg.sender, block.timestamp,_availableUnits, _pricePerUnit,_ipfsImageHash);
         productCounter++;
         return true;
     }
@@ -75,6 +79,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         newProduct.pricePerUnit=_pricePerUnit;
         newProduct.availableUnits=_availableUnits;
         producdIdtoProduct[_ProducdId]=newProduct;
+
         return true;
     }
 
@@ -84,6 +89,8 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         address owner = product.ProductOwner;
 
         require(owner != address(0), "Product does not exist");
+
+        emit ProductRemoved(productId, block.timestamp, msg.sender);
 
         uint256 index = producdIdtoIndex[productId];
         uint256 lastProductId = shopOwnedProducts[owner][shopOwnedProducts[owner].length - 1];
@@ -108,6 +115,7 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
         require(quantity <= product.availableUnits, "Required quantity Not Available");
         product.availableUnits -= quantity;
         producdIdtoProduct[_productId]=product;
+        emit ProductUpdated(_productId, block.timestamp, msg.sender, product.availableUnits, product.pricePerUnit);
         return true;
      }
 

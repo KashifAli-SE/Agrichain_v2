@@ -102,10 +102,12 @@ abstract contract AccessControlled {
         _;
     }
 
-    modifier onlyFirstAdminOrDocumentRegistry() {
+    modifier onlyAdminOrDocumentRegistry() {
         require(um.isActiveUser(msg.sender) , "Not an ActiveUser");
         require(um.isAdmin(msg.sender) , "Not an Admin");
         _;
     }
+
+    
 
 }

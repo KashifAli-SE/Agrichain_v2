@@ -40,6 +40,5 @@ contract GovernmentPolicy{
 
     }
 
-    
 
 }

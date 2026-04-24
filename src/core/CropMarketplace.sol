@@ -60,12 +60,12 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
     /////////------EVENTS //////////////////
     ///////////////////////////////////////
 
-    event CropListed(uint256 indexed cropId, string cropName, string indexed cropType,uint256 cropStockAmount,
+    event CropListed(uint256 indexed cropId, uint256 indexed time,string cropName, string cropType,uint256 cropStockAmount,
     UNIT unit, uint256 pricePerUnit,address indexed cropOwner, string CropCityCountry,string ipfsImageHash);
+    event CropUpdated(uint256 indexed cropID, address indexed cropOwner,uint256 indexed time,uint256 cropStockAmount, uint256 pricePerUnit);
+    event OrderManagerSet(address indexed orderManager, address indexed updatedBy, uint256 indexed time);
+    event TransactionManagerSet(address indexed transactionManager, address indexed updatedBy, uint256 indexed time);
 
-    event CropUpdated(uint256 cropID, uint256 cropStockAmount, uint256 pricePerUnit, address indexed cropOwner);
-    
-    event  CropSold(uint256 cropID, address indexed buyer, address indexed seller, uint256 pricePerUnit);
 
     constructor(address _usermanager) 
         AccessControlled(_usermanager)  {
@@ -86,7 +86,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
             cropsArray.push(newCrop);
             farmerOwnedCrops[msg.sender].push(cropCounter);
             cropIDtoArrayIndex[cropCounter]=cropsArray.length-1;
-            emit CropListed(cropCounter,_CropName,_CropType,_cropStockAmount,_unit,_pricePerUnit,msg.sender,_CropCityCountry,_ipfsImageHash);
+            emit CropListed(cropCounter, block.timestamp, _CropName, _CropType, _cropStockAmount, _unit, _pricePerUnit, msg.sender, _CropCityCountry, _ipfsImageHash);
             cropCounter++;
     }
 
@@ -96,7 +96,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
                 require(newCrop.cropOwner == msg.sender, "Farmer is not the owner of crop");
                 newCrop.cropStockAmount=_cropStockAmount;
                 newCrop.pricePerUnit=_pricePerUnit;
-                emit CropUpdated(_cropID, _cropStockAmount, _pricePerUnit, msg.sender);
+                emit CropUpdated(_cropID, msg.sender, block.timestamp, _cropStockAmount, _pricePerUnit);
                 return true;
     }
 
@@ -106,6 +106,7 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
             uint256 index=cropIDtoArrayIndex[_cropId];
             Crop storage crop=cropsArray[index];
             require(quantity <= crop.cropStockAmount, "Required quantity Not Available");
+            emit CropUpdated(_cropId, crop.cropOwner, block.timestamp, crop.cropStockAmount - quantity, crop.pricePerUnit);
             crop.cropStockAmount -= quantity;
 
         }

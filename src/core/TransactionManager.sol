@@ -41,6 +41,8 @@ contract TransactionManager is ITransactionManager,AccessControlled{
     Treasury treasury_contract_address;
 
     event TransactionAdded( uint256 indexed transactionID, uint256 indexed orderID,address indexed seller, address buyer, uint256 amountTransferred);
+    event TransactionReported(uint256 indexed transactionID, address indexed reporter, address indexed accused, string reason, uint256 time);
+    // event TransactionReportResolved(uint256 indexed transactionID, ReportStatus indexed status, uint256 indexed time);
 
     constructor(address _usermanager) AccessControlled(_usermanager){
         Transaction memory dummyTransaction= Transaction(0,0,address(0),address(0),0);
@@ -78,7 +80,7 @@ contract TransactionManager is ITransactionManager,AccessControlled{
 
  
 
-    function reportTransection(uint256 transactionID, address _reported, address accused,string memory reason) external returns(bool){
+    function reportTransection(uint256 transactionID, address _reported, address accused,string memory reason) external onlyVerified returns(bool){
 
     }
 
@@ -86,7 +88,7 @@ contract TransactionManager is ITransactionManager,AccessControlled{
     //////////-------SETTERS--------///////////////
     //////////////////////////////////////////////
 
-    function setTreasury(address _treasury) external returns(bool) {
+    function setTreasury(address _treasury) external onlyAdmin returns(bool) {
         treasury_address=payable(_treasury);
         treasury_contract_address=Treasury(payable(treasury_address));
 

@@ -51,9 +51,12 @@ contract OrderManager is IOrderManager, AccessControlled{
 
     address treasury;
 
-    event OrderCreated(uint256 indexed orderID, address indexed buyer, address indexed seller, uint256 productId);
+    event OrderCreated(uint256 indexed orderID, address indexed buyer, address indexed seller, uint256 productId,ORDERSTATUS orderStatus,uint256 time);
+    event orderUpdated(uint256 indexed orderID, ORDERSTATUS indexed newStatus, uint256 indexed time);
     event treasurySet(address indexed treasuryAddress, address indexed updatedBy,uint256 indexed time);
     event cropMarketPlaceSet(address indexed cropMarketPlace, address indexed updatedBy, uint256 indexed time);
+    event productMarketPlaceSet(address indexed productMarketPlace, address indexed updatedBy, uint256 indexed time);
+    event orderBuyerUpdated(uint256 indexed orderID, address indexed newBuyer, uint256 indexed time);
 
     constructor(address _usermanager) AccessControlled(_usermanager) {
             // productMarketPlace=ProductMarketplace(_pm);
@@ -109,7 +112,7 @@ contract OrderManager is IOrderManager, AccessControlled{
 
             }
             orderIDtoOrderArrayIndex[orderCounter]=orders.length-1;
-            emit OrderCreated(orderCounter, msg.sender, seller, _productId);
+            emit OrderCreated(orderCounter, msg.sender, seller, _productId, ORDERSTATUS.PLACED, block.timestamp);
             orderCounter++;
             return true;
     }
@@ -122,6 +125,7 @@ contract OrderManager is IOrderManager, AccessControlled{
         Order storage od=orders[index];
         od.orderStatus=ORDERSTATUS.PAID;
         orderIDtoOrderStatus[_orderID]=ORDERSTATUS.PAID;
+        emit orderUpdated(_orderID, ORDERSTATUS.PAID, block.timestamp);
         return true;
     }
 
@@ -138,6 +142,7 @@ contract OrderManager is IOrderManager, AccessControlled{
         orderIDtoOrderStatus[_orderID] = ORDERSTATUS.CONFIRMED;
         require(od.seller != address(0), "seller address is Null");
         tre.release(_orderID, payable(od.seller), payable(od.buyer));
+        emit orderUpdated(_orderID, ORDERSTATUS.CONFIRMED, block.timestamp);
         return true;
     }
 
@@ -148,6 +153,8 @@ contract OrderManager is IOrderManager, AccessControlled{
         require(order.orderStatus == ORDERSTATUS.CONFIRMED,"order not confirmed from Customer");
         order.orderStatus=ORDERSTATUS.COMPLETED;
         orders[index]=order;
+        orderIDtoOrderStatus[_orderID]=ORDERSTATUS.COMPLETED;
+        emit orderUpdated(_orderID, ORDERSTATUS.COMPLETED, block.timestamp);
         return true;   
     }
 
@@ -160,6 +167,7 @@ contract OrderManager is IOrderManager, AccessControlled{
     function setProductMarketPlace(address _productMarketPlaceAddress) external onlyAdmin returns(bool){
         productMarketPlace_contract_address=_productMarketPlaceAddress;
         productMarketPlace=ProductMarketplace(_productMarketPlaceAddress);
+        emit productMarketPlaceSet(_productMarketPlaceAddress, msg.sender,block.timestamp);
         return true;
     }
 

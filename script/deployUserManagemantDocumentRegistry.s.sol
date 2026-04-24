@@ -6,7 +6,7 @@ import {Script} from "../lib/forge-std/src/Script.sol";
 import {UserManagement} from "../src/core/UserManagement.sol";
 import {DocumentRegistry} from "../src/core/DocumentRegistry.sol";
 
-contract usermanagerdeploy is Script{
+contract usermanager is Script{
 
     function setup() public {
 

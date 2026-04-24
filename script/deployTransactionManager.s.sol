@@ -3,17 +3,20 @@ pragma solidity 0.8.20;
 
 import {Script} from "../lib/forge-std/src/Script.sol";
 import {TransactionManager} from "../src/core/TransactionManager.sol";
+import {ComplaintRegistry} from "../src/core/ComplaintRegistry.sol";
 
-contract deployTransectionOrderManager is Script{
+contract deployTransactionManager is Script{
 
         function setUp() external{
 
         }
 
         function run() external{
-            address _usermanager = vm.envAddress("usermanagement_contract_address");
+            address _usermanager = vm.envAddress("userManagementContractAddress");
             vm.startBroadcast();
             TransactionManager tm = new TransactionManager(_usermanager);
+            ComplaintRegistry cr = new ComplaintRegistry(_usermanager);
+
             vm.stopBroadcast();
            
         }

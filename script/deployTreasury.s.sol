@@ -5,17 +5,17 @@ import {Script} from "../lib/forge-std/src/Script.sol";
 
 import {Treasury} from "../src/core/Treasury.sol";
 
-contract deployTransectionOrderManager is Script{
+contract deployTreasury is Script{
 
         function setUp() external{
 
         }
 
         function run() external{
-            address _usermanager = vm.envAddress("usermanagement_contract_address");
+            address _usermanager = vm.envAddress("userManagementContractAddress");
             vm.startBroadcast();
             Treasury tre=new Treasury(_usermanager);
-           vm.stopBroadcast();
+            vm.stopBroadcast();
            
         }
 

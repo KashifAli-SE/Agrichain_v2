@@ -2,12 +2,6 @@
 pragma solidity 0.8.20;
 
 interface IUserManagement {
-
-    //event LoginSuccessful("user login successful");
-    //event signUp("user signedUP");
-    //event deleteAccount("Account deleted");
-    //event updateAccount("Account details updated");
-
     enum ROLE{
         NONE,
         FARMER,

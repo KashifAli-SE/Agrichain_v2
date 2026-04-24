@@ -13,7 +13,7 @@ contract deployOrderManager is Script{
         }
 
         function run() external{
-            address _usermanager = vm.envAddress("usermanagement_contract_address");
+            address _usermanager = vm.envAddress("userManagementContractAddress");
             vm.startBroadcast();
             OrderManager om = new OrderManager(_usermanager);
             vm.stopBroadcast();           
