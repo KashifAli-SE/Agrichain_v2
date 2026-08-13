@@ -49,62 +49,69 @@ export default function AdminPage() {
   //   1. Read all UserSignedUp events  → get (address, name, role)
   //   2. Read all userRoleVerificationStatusUpdated events → get latest status per address
   //   3. Merge and show users whose latest status is PENDING(0) or APPLIED(1)
+
+  // Helper: fetch all logs for a topic in 9000-block chunks (MetaMask limit = 10000)
+  const fetchAllLogs = useCallback(
+    async (
+      p: ethers.BrowserProvider,
+      contractAddr: string,
+      topic: string,
+      fromBlock: number,
+      toBlock: number
+    ): Promise<ethers.Log[]> => {
+      const CHUNK   = 9000;
+      const results: ethers.Log[] = [];
+      for (let from = fromBlock; from <= toBlock; from += CHUNK) {
+        const to   = Math.min(from + CHUNK - 1, toBlock);
+        const logs = await p.getLogs({
+          address:   contractAddr,
+          topics:    [topic],
+          fromBlock: from,
+          toBlock:   to,
+        });
+        results.push(...logs);
+      }
+      return results;
+    },
+    []
+  );
+
   const fetchPendingUsers = useCallback(async () => {
     if (!provider) return;
     setLoadingUsers(true);
     try {
       const iface = new ethers.Interface(UserManagementABI);
 
-      // Compute topic hashes from exact event signatures (enums = uint8)
-      const signUpTopic = ethers.id("UserSignedUp(address,string,uint8,uint256)");
-      const statusTopic = ethers.id("userRoleVerificationStatusUpdated(address,uint8,uint8,uint256)");
-
+      const signUpTopic  = ethers.id("UserSignedUp(address,string,uint8,uint256)");
+      const statusTopic  = ethers.id("userRoleVerificationStatusUpdated(address,uint8,uint8,uint256)");
       const contractAddr = CONTRACT_ADDRESSES.UserManagement;
       const latestBlock  = await provider.getBlockNumber();
-      const CHUNK        = 9000;
-
-      // Fetch all logs in chunks of 9000 blocks (MetaMask limit is 10000)
-      async function fetchAllLogs(topic: string): Promise<ethers.Log[]> {
-        const results: ethers.Log[] = [];
-        for (let from = DEPLOYMENT_BLOCK; from <= latestBlock; from += CHUNK) {
-          const to   = Math.min(from + CHUNK - 1, latestBlock);
-          const logs = await provider.getLogs({
-            address:   contractAddr,
-            topics:    [topic],
-            fromBlock: from,
-            toBlock:   to,
-          });
-          results.push(...logs);
-        }
-        return results;
-      }
 
       const [signUpLogs, statusLogs] = await Promise.all([
-        fetchAllLogs(signUpTopic),
-        fetchAllLogs(statusTopic),
+        fetchAllLogs(provider, contractAddr, signUpTopic,  DEPLOYMENT_BLOCK, latestBlock),
+        fetchAllLogs(provider, contractAddr, statusTopic, DEPLOYMENT_BLOCK, latestBlock),
       ]);
 
       console.log(`Fetched ${signUpLogs.length} UserSignedUp events`);
       console.log(`Fetched ${statusLogs.length} statusUpdated events`);
 
-      // Build latest verification status per address from status events
+      // Build latest verification status per address
       const latestStatus: Record<string, number> = {};
       for (const log of statusLogs) {
         const decoded = iface.parseLog({ topics: [...log.topics], data: log.data });
         if (!decoded) continue;
         const userAddr = decoded.args[0] as string;
-        const status   = Number(decoded.args[2]); // verificationStatus is arg index 2
+        const status   = Number(decoded.args[2]);
         latestStatus[userAddr.toLowerCase()] = status;
       }
 
-      // Build user list — PENDING(0) and APPLIED(1) only
+      // Build pending user list
       const users: PendingUser[] = [];
       const seen = new Set<string>();
 
       for (const log of signUpLogs) {
         const decoded = iface.parseLog({ topics: [...log.topics], data: log.data });
         if (!decoded) continue;
-
         const userAddr = decoded.args[0] as string;
         const name     = decoded.args[1] as string;
         const role     = Number(decoded.args[2]);
@@ -127,7 +134,7 @@ export default function AdminPage() {
     } finally {
       setLoadingUsers(false);
     }
-  }, [provider]);
+  }, [provider, fetchAllLogs]);
 
   useEffect(() => {
     if (isAdmin) fetchPendingUsers();
