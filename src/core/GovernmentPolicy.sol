@@ -1,4 +1,4 @@
-//SPDX-Licence-Identifier: MIT
+//SPDX-License-Identifier: MIT
 
 
 // Layout of Contract:

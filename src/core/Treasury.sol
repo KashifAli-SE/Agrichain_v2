@@ -23,7 +23,7 @@
 // view & pure functions
 
 
-//SPDX-Licence-Identifier: MIT
+//SPDX-License-Identifier: MIT
 
 pragma solidity 0.8.20;
 
@@ -45,6 +45,8 @@ contract Treasury is AccessControlled{
         CONFRIMED,
         COMPLETED
     }
+
+    bool private _releasing; // reentrancy guard for release()
 
     mapping(uint256=>uint256) orderIdtoFunds; //
 
@@ -92,36 +94,43 @@ contract Treasury is AccessControlled{
         uint256 index = ordermanager.getOrderindex(_orderID);
         require(index < ordermanager.getOrdersLength(), "Invalid index");
         
-        // FIX: Get the required amount to validate payment
         uint256 requiredAmount = ordermanager.getOrderAmount(_orderID);
-        requiredAmount=requiredAmount.getUSDtoEth(priceFeed);
-        // FIX: Verify farmer sent the correct amount of ETH
+        requiredAmount = requiredAmount.getUSDtoEth(priceFeed);
         require(msg.value >= requiredAmount, "Incorrect payment amount");
         
-        // FIX: Store the actual ETH sent (msg.value), not a recalculated number
+        // Store the exact required amount; refund any excess back to sender
         orderIdtoFunds[_orderID] = requiredAmount;
         
+        uint256 excess = msg.value - requiredAmount;
+        if (excess > 0) {
+            (bool refunded, ) = payable(msg.sender).call{value: excess}("");
+            require(refunded, "Excess refund failed");
+        }
+        
         ordermanager.makepaid(_orderID);
-        emit PaymentReceived(_orderID, msg.sender, msg.value, block.timestamp);
+        emit PaymentReceived(_orderID, msg.sender, requiredAmount, block.timestamp);
         return true;
     }
 
 
     function release(uint256 _orderID, address payable _seller,address payable _buyer) external onlyOrderManager returns(bool) {
+        require(!_releasing, "Reentrant call");
+        _releasing = true;
+
         uint256 amount = orderIdtoFunds[_orderID];
         require(amount > 0, "No Funds");
-        
-        // Verify contract actually has the funds
         require(address(this).balance >= amount, "Insufficient contract balance");
         
-        orderIdtoFunds[_orderID] = 0;  // Prevent reentrancy
-        
+        // Clear funds and update state before external calls (checks-effects-interactions)
+        orderIdtoFunds[_orderID] = 0;
+        transaction_manager.addTransaction(_orderID, _seller, _buyer, amount);
+        ordermanager.completeOrder(_orderID);
+
         (bool success, ) = _seller.call{value: amount}("");
         require(success, "Payment Not Released");
         emit PaymentReleased(_orderID, _seller, amount, block.timestamp);
-        
-        transaction_manager.addTransaction(_orderID, _seller,_buyer,amount);
-        ordermanager.completeOrder(_orderID);
+
+        _releasing = false;
         return true;
     }
 
@@ -141,11 +150,12 @@ contract Treasury is AccessControlled{
     function setTransactionManager(address tm) external onlyAdmin returns(bool){
         transaction_manager_address=tm;
         transaction_manager=TransactionManager(tm);
-
+        return true;
     }
 
     function setAggregatorv3InterfacePriceFeed(AggregatorV3Interface _priceFeed) external onlyAdmin returns(bool){
         priceFeed=_priceFeed;
+        return true;
     }
 
     ///////////////////////////////////////////////

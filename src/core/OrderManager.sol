@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 // This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
 
@@ -118,13 +118,13 @@ contract OrderManager is IOrderManager, AccessControlled{
     }
     
     function makepaid(uint256 _orderID) external override onlyTreasury returns(bool) {
-        require(orders[_orderID].orderStatus == ORDERSTATUS.PLACED, "Order Already Passed this phase");
-        require(_orderID<=orderCounter, "order does not exist");
-        uint256 index=orderIDtoOrderArrayIndex[_orderID];
-        require(index<orders.length,"Invalid Order index");
-        Order storage od=orders[index];
-        od.orderStatus=ORDERSTATUS.PAID;
-        orderIDtoOrderStatus[_orderID]=ORDERSTATUS.PAID;
+        require(_orderID <= orderCounter, "order does not exist");
+        uint256 index = orderIDtoOrderArrayIndex[_orderID];
+        require(index < orders.length, "Invalid Order index");
+        Order storage od = orders[index];
+        require(od.orderStatus == ORDERSTATUS.PLACED, "Order Already Passed this phase");
+        od.orderStatus = ORDERSTATUS.PAID;
+        orderIDtoOrderStatus[_orderID] = ORDERSTATUS.PAID;
         emit orderUpdated(_orderID, ORDERSTATUS.PAID, block.timestamp);
         return true;
     }

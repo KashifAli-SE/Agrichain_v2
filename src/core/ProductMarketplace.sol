@@ -1,4 +1,4 @@
-// SPDX-Licence-Provider: MIT
+// SPDX-License-Identifier: MIT
 
 
 // This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
@@ -125,8 +125,9 @@ contract ProductMarketplace  is IProductMarketplace, AccessControlled{
 
    // function getProductUnit(uint256 prodductId) external view returns(UNIT memory){ }
 
-   function setOrderManager(address ordermanager_address) external returns(bool){
+   function setOrderManager(address ordermanager_address) external onlyAdmin returns(bool){
         orderManager_address=ordermanager_address;
+        emit OrderManagerSet(ordermanager_address, msg.sender, block.timestamp);
         return true;
     }
 

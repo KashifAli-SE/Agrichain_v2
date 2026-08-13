@@ -1,4 +1,4 @@
-// SPDX-Licence-Provider: MIT
+// SPDX-License-Identifier: MIT
 
 // This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
 
@@ -38,43 +38,43 @@ abstract contract AccessControlled {
 
 
     modifier onlyFarmer() {
-        require(um.isActiveUser(msg.sender) != false, "Not a FARMER");
+        require(um.isActiveUser(msg.sender) != false, "Not an ActiveUser");
         require(um.isFarmer(msg.sender) != false, "Not a FARMER");
         _;
     }
 
     modifier onlyShop() {
-        require(um.isActiveUser(msg.sender) != false, "Not a SHOPKEEPER");
+        require(um.isActiveUser(msg.sender) != false, "Not an ActiveUser");
         require(um.isShop(msg.sender) != false, "Not a SHOPKEEPER");
         _;
     }
 
     modifier onlyGovernment() {
-        require(um.isActiveUser(msg.sender) != false, "Not a FARMER");
-        require(um.isGovernment(msg.sender) != false, "Not a FARMER");
+        require(um.isActiveUser(msg.sender) != false, "Not an ActiveUser");
+        require(um.isGovernment(msg.sender) != false, "Not a GOVERNMENT");
         _;
     }
 
     modifier onlyBuyer() {
-        require(um.isActiveUser(msg.sender) != false, "Not a FARMER");
-        require(um.isBuyer(msg.sender) != false, "Not a FARMER");
+        require(um.isActiveUser(msg.sender) != false, "Not an ActiveUser");
+        require(um.isBuyer(msg.sender) != false, "Not a BUYER");
         _;
     }
 
     modifier onlyAdmin() {
-        require(um.isActiveUser(msg.sender) != false, "Not a FARMER");
-        require(um.isAdmin(msg.sender) != false, "Not a FARMER");
+        require(um.isActiveUser(msg.sender) != false, "Not an ActiveUser");
+        require(um.isAdmin(msg.sender) != false, "Not an ADMIN");
         _;
     }
 
     modifier onlyAdminOrShop() {
-        require(um.isActiveUser(msg.sender) != false , "Not a FARMER");
+        require(um.isActiveUser(msg.sender) != false , "Not an ActiveUser");
         require(um.isShop(msg.sender) || um.isAdmin(msg.sender) , "Not a Shop or Admin");
         _;
     }
 
     modifier onlyActiveUser() {
-        require(um.isActiveUser(msg.sender) != false, "Not a FARMER");
+        require(um.isActiveUser(msg.sender) != false, "Not an ActiveUser");
         _ ;
     }
 

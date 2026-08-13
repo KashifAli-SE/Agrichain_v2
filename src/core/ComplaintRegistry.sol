@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 
 // This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
@@ -104,11 +104,12 @@ contract ComplaintRegistry is IComplainRegisty, AccessControlled{
     function withDrawReport(uint256 reportId) external onlyVerified override returns(bool){
         uint256 index=reportIDtoReportArrayIndex[reportId];
         report storage rp = reports[index];
+        require(rp.buyer == msg.sender, "Only the report filer can withdraw");
+        require(rp.reportStatus == ReportStatus.FILED, "Report is not in FILED status");
         rp.reportStatus = ReportStatus.RESOLVED;
         reportIDtoReportStatus[reportId] = ReportStatus.RESOLVED;
-        require(rp.buyer != address(0) && rp.seller != address(0), "buyer or seller address is Null");
+        emit ReportWithdrawn(reportId, block.timestamp);
         return true;
-
     }
 
     function getReportStatus(uint256 reportId) external view override returns(ReportStatus){

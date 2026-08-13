@@ -10,6 +10,7 @@ import {ProductMarketplace} from "../src/core/ProductMarketplace.sol";
 import {OrderManager} from "../src/core/OrderManager.sol";
 import {TransactionManager} from "../src/core/TransactionManager.sol";
 import {Treasury} from "../src/core/Treasury.sol";
+import {ComplaintRegistry} from "../src/core/ComplaintRegistry.sol";
 
 contract  deployOtherContracts is Script{
 
@@ -26,6 +27,7 @@ contract  deployOtherContracts is Script{
         OrderManager om=new OrderManager(_userManagement);                      
         Treasury treasury=new Treasury(_userManagement);
         TransactionManager tm = new TransactionManager(_userManagement);
+        ComplaintRegistry cr= new ComplaintRegistry(_userManagement);
         vm.stopBroadcast();
     }
 }

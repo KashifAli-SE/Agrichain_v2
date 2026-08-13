@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 
 // This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
@@ -71,7 +71,8 @@ contract CropMarketPlace is ICropMarketplace , AccessControlled{
         AccessControlled(_usermanager)  {
             Crop memory nullCrop=Crop({CropID: 0, CropName: "Null",CropType :"Null", cropStockAmount :0,unit :UNIT.NONE,pricePerUnit :0, cropOwner:address(0),ipfsImageHash:"NullHash" ,CropCityCountry:"NullCityCountry"});
             cropsArray.push(nullCrop);
-            cropCounter=0;
+            cropIDtoArrayIndex[0]=0;
+            cropCounter=1;
         }
 
     modifier onlyOrderManager(){

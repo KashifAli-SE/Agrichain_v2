@@ -1,4 +1,4 @@
-// SPDX-Licence-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
 
 // This is considered an Exogenous, Decentralized, Anchored (pegged), Crypto Collateralized low volitility coin
@@ -80,8 +80,16 @@ contract TransactionManager is ITransactionManager,AccessControlled{
 
  
 
-    function reportTransection(uint256 transactionID, address _reported, address accused,string memory reason) external onlyVerified returns(bool){
-
+    function reportTransection(uint256 transactionID, address _reported, address accused, string memory reason) external onlyVerified returns(bool){
+        require(transactionID > 0 && transactionID < transectionCounter, "Transaction does not exist");
+        uint256 index = transactionIDtodTransactionArrayIndex[transactionID];
+        Transaction memory txn = transactions[index];
+        require(
+            txn.seller == msg.sender || txn.buyer == msg.sender,
+            "Only transaction participants can report"
+        );
+        emit TransactionReported(transactionID, msg.sender, accused, reason, block.timestamp);
+        return true;
     }
 
      ///////////////////////////////////////////////
@@ -89,9 +97,9 @@ contract TransactionManager is ITransactionManager,AccessControlled{
     //////////////////////////////////////////////
 
     function setTreasury(address _treasury) external onlyAdmin returns(bool) {
-        treasury_address=payable(_treasury);
-        treasury_contract_address=Treasury(payable(treasury_address));
-
+        treasury_address = payable(_treasury);
+        treasury_contract_address = Treasury(payable(treasury_address));
+        return true;
     }
 
     ///////////////////////////////////////////////
