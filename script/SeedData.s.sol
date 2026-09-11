@@ -173,41 +173,5 @@ contract SeedData is Script {
         vm.stopBroadcast();
         console.log("3 orders placed.");
 
-        // ════════════════════════════════════════════
-        // PHASE 4 — Buyer pays for all 3 orders
-        // ════════════════════════════════════════════
-        console.log("\n--- Phase 4: Buyer pays for orders ---");
-        _payOrders(om, tre, buyerKey);
-
-        console.log("\n============================================");
-        console.log("   Seed data complete!");
-        console.log("   10 crops listed");
-        console.log("   11 products listed");
-        console.log("    3 orders placed and paid");
-        console.log("============================================");
-    }
-
-    function _payOrders(
-        OrderManager om,
-        Treasury     tre,
-        uint256      buyerKey
-    ) internal {
-        AggregatorV3Interface feed = tre.getPriceFeed();
-        uint256 counter = om.getOrderCounter();
-        uint256 id1 = counter - 3;
-        uint256 id2 = counter - 2;
-        uint256 id3 = counter - 1;
-
-        console.log("Paying order IDs:", id1, id2, id3);
-
-        uint256 eth1 = om.getOrderAmount(id1).getUSDtoEth(feed) * 105 / 100;
-        uint256 eth2 = om.getOrderAmount(id2).getUSDtoEth(feed) * 105 / 100;
-        uint256 eth3 = om.getOrderAmount(id3).getUSDtoEth(feed) * 105 / 100;
-
-        vm.startBroadcast(buyerKey);
-        tre.payForOrder{value: eth1}(id1);
-        tre.payForOrder{value: eth2}(id2);
-        tre.payForOrder{value: eth3}(id3);
-        vm.stopBroadcast();
     }
 }
