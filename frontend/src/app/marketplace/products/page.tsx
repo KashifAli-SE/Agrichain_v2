@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { Store, Plus, Search, ShoppingCart, Trash2 } from "lucide-react";
 import { CONTRACT_ADDRESSES, NETWORK_CONFIG } from "@/config/contracts";
 import { ProductMarketplaceABI } from "@/config/abis";
+import IpfsImage from "@/components/ui/IpfsImage";
 
 interface Product {
   ProducdId: bigint; ProductName: string; ProductType: number;
@@ -137,13 +138,12 @@ export default function ProductsMarketplacePage() {
           {filtered.map(product => (
             <Card key={product.ProducdId.toString()} hover className="flex flex-col">
               <div className="h-40 bg-gradient-to-br from-earth-100 to-earth-50 rounded-xl mb-4 flex items-center justify-center overflow-hidden">
-                {product.ipfsImageHash && product.ipfsImageHash !== "NullHash" ? (
-                  <img src={`https://ipfs.io/ipfs/${product.ipfsImageHash}`} alt={product.ProductName}
-                    className="w-full h-full object-cover rounded-xl"
-                    onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                ) : (
-                  <Store className="w-12 h-12 text-earth-300" />
-                )}
+                <IpfsImage
+                  cid={product.ipfsImageHash}
+                  alt={product.ProductName}
+                  className="w-full h-full object-cover rounded-xl"
+                  fallback={<Store className="w-12 h-12 text-earth-300" />}
+                />
               </div>
               <div className="flex-1">
                 <div className="flex items-start justify-between">

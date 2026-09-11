@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { Wheat, Plus, Search, ShoppingCart, Edit2 } from "lucide-react";
 import { CONTRACT_ADDRESSES, NETWORK_CONFIG } from "@/config/contracts";
 import { CropMarketplaceABI } from "@/config/abis";
+import IpfsImage from "@/components/ui/IpfsImage";
 
 interface Crop {
   CropID: bigint; CropName: string; CropType: string;
@@ -179,18 +180,14 @@ function CropCard({ crop, isBuyer, isOwner, onOrder }: {
   const available = Number(crop.cropStockAmount) > 0;
   return (
     <Card hover className="flex flex-col">
-      {/* Image placeholder */}
+      {/* Image */}
       <div className="h-40 bg-gradient-to-br from-primary-100 to-primary-50 rounded-xl mb-4 flex items-center justify-center overflow-hidden">
-        {crop.ipfsImageHash && crop.ipfsImageHash !== "NullHash" ? (
-          <img
-            src={`https://ipfs.io/ipfs/${crop.ipfsImageHash}`}
-            alt={crop.CropName}
-            className="w-full h-full object-cover rounded-xl"
-            onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
-          />
-        ) : (
-          <Wheat className="w-12 h-12 text-primary-300" />
-        )}
+        <IpfsImage
+          cid={crop.ipfsImageHash}
+          alt={crop.CropName}
+          className="w-full h-full object-cover rounded-xl"
+          fallback={<Wheat className="w-12 h-12 text-primary-300" />}
+        />
       </div>
       <div className="flex-1">
         <div className="flex items-start justify-between">

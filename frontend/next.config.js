@@ -2,8 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['ipfs.io', 'gateway.pinata.cloud'],
-    unoptimized: true, // required for Netlify static export compatibility
+    domains: [
+      'ipfs.io',
+      'cloudflare-ipfs.com',
+      'gateway.pinata.cloud',
+      'w3s.link',
+    ],
+    unoptimized: true,
   },
 };
 
