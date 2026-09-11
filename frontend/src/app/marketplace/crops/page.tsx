@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { ethers } from "ethers";
 import { useWeb3 } from "@/context/Web3Context";
 import { CROP_UNIT, parseContractError, shortAddress } from "@/lib/helpers";
 import Button from "@/components/ui/Button";
@@ -10,6 +11,8 @@ import Select from "@/components/ui/Select";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import { Wheat, Plus, Search, ShoppingCart, Edit2 } from "lucide-react";
+import { CONTRACT_ADDRESSES, NETWORK_CONFIG } from "@/config/contracts";
+import { CropMarketplaceABI } from "@/config/abis";
 
 interface Crop {
   CropID: bigint; CropName: string; CropType: string;
@@ -32,14 +35,24 @@ export default function CropsMarketplacePage() {
   const isBuyer  = userData?.Role === 2;
 
   const fetchCrops = useCallback(async () => {
-    if (!contracts.cropMarketplace) return;
     setLoading(true);
     try {
-      const data = await contracts.cropMarketplace.getAllListedCrops();
+      // Use a read-only provider so visitors without MetaMask can browse
+      const readProvider = contracts.cropMarketplace?.runner?.provider
+        ?? new ethers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
+      const readContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.CropMarketplace,
+        CropMarketplaceABI,
+        readProvider
+      );
+      const data = await readContract.getAllListedCrops();
       // index 0 is null crop
       setCrops(data.slice(1).filter((c: Crop) => c.cropOwner !== "0x0000000000000000000000000000000000000000"));
-    } catch { /* not deployed yet */ }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("fetchCrops:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [contracts.cropMarketplace]);
 
   useEffect(() => { fetchCrops(); }, [fetchCrops]);

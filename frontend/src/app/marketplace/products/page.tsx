@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { ethers } from "ethers";
 import { useWeb3 } from "@/context/Web3Context";
 import { SHOP_PRODUCT_TYPE, parseContractError, shortAddress } from "@/lib/helpers";
 import Button from "@/components/ui/Button";
@@ -10,6 +11,8 @@ import Select from "@/components/ui/Select";
 import Modal from "@/components/ui/Modal";
 import toast from "react-hot-toast";
 import { Store, Plus, Search, ShoppingCart, Trash2 } from "lucide-react";
+import { CONTRACT_ADDRESSES, NETWORK_CONFIG } from "@/config/contracts";
+import { ProductMarketplaceABI } from "@/config/abis";
 
 interface Product {
   ProducdId: bigint; ProductName: string; ProductType: number;
@@ -32,20 +35,30 @@ export default function ProductsMarketplacePage() {
   const isFarmer = userData?.Role === 1;
 
   const fetchProducts = useCallback(async () => {
-    if (!contracts.productMarketplace) return;
     setLoading(true);
     try {
-      const counter = await contracts.productMarketplace.productCounter();
+      // Read-only provider — works even without MetaMask
+      const readProvider = contracts.productMarketplace?.runner?.provider
+        ?? new ethers.JsonRpcProvider(NETWORK_CONFIG.rpcUrl);
+      const readContract = new ethers.Contract(
+        CONTRACT_ADDRESSES.ProductMarketplace,
+        ProductMarketplaceABI,
+        readProvider
+      );
+      const counter = await readContract.productCounter();
       const items: Product[] = [];
-      for (let i = 1; i < Number(counter); i++) {
+      for (let i = 0; i < Number(counter); i++) {
         try {
-          const p = await contracts.productMarketplace.getProductById(BigInt(i));
+          const p = await readContract.getProductById(BigInt(i));
           if (p.ProductOwner !== "0x0000000000000000000000000000000000000000") items.push(p);
         } catch {}
       }
       setProducts(items);
-    } catch {}
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("fetchProducts:", err);
+    } finally {
+      setLoading(false);
+    }
   }, [contracts.productMarketplace]);
 
   useEffect(() => { fetchProducts(); }, [fetchProducts]);
